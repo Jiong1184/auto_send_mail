@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__sqlite__read_query",
+      "mcp__sqlite__write_query",
+      "mcp__sqlite__create_table",
+      "mcp__sqlite__list_tables",
+      "mcp__sqlite__describe_table",
+      "mcp__email__send_email",
+      "mcp__email__check_replies",
+      "mcp__email__verify_connection",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__search_files",
+      "Bash(node scripts/email-mcp-server/index.js)",
+      "Bash(npm install)",
+      "Bash(npm ci)"
+    ]
+  }
+}

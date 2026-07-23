@@ -1,0 +1,12 @@
+# Email credentials (contains SMTP/IMAP auth codes)
+scripts/email-mcp-server/config.json
+
+# Node.js dependencies
+scripts/email-mcp-server/node_modules/
+
+# SQLite database
+data/crm.db
+
+# OS files
+.DS_Store
+Thumbs.db

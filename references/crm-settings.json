@@ -1,0 +1,28 @@
+{
+  "autoApproveDrafts": true,
+  "language": "zh",
+  "autoReplyPolling": {
+    "enabled": true,
+    "intervalMinutes": 5,
+    "cronJobId": "5227f2c4",
+    "lastCheckedAt": "2026-07-23T08:34:28.000Z",
+    "note": "When enabled with CronCreate, auto-checks replies every N minutes. lastCheckedAt tracks the most recent check time so each cycle only fetches new messages."
+  },
+  "note_language": "\"en\" for English (default), \"zh\" for Chinese. Controls email language and Skill UI prompts.",
+  "note_autoApprove": "Set to true to skip draft review and send emails immediately. When combined with autoReplyPolling, the full pipeline runs hands-free.",
+  "teamMembers": [
+    {
+      "name": "Sales Team",
+      "email": "fanqionghong@newcowin.com",
+      "role": "Product info, pricing, negotiation"
+    } 
+  ],
+  "note_teamMembers": "Configure your team members here. They appear as handoff targets when transferring a prospect to a human.",
+  "workingHours": {
+    "start": 9,
+    "end": 18,
+    "note": "Working hours in prospect's local time (24h format). Outreach emails are only sent during this window. Reply emails ignore this restriction."
+  },
+  "defaultTimezone": "Asia/Shanghai",
+  "note_timezone": "Default timezone when TLD lookup fails. TLD mapping: .cn→Asia/Shanghai, .jp→Asia/Tokyo, .kr→Asia/Seoul, .de→Europe/Berlin, .fr→Europe/Paris, .uk→Europe/London, .au→Australia/Sydney, .in→Asia/Kolkata, .br→America/Sao_Paulo, .us→America/New_York, .ca→America/Toronto"
+}

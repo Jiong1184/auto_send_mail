@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "data/crm.db"]
+    },
+    "email": {
+      "command": "node",
+      "args": ["scripts/email-mcp-server/index.js"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "references/knowledge-base"
+      ]
+    }
+  }
+}
