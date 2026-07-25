@@ -1,22 +1,26 @@
-# Product Introduction — 优旦防护箱
+# Product Introduction — 佐奈丹 (ZONADE)
 
 ## About Our Company
 
-We are a professional manufacturer of high-quality protective cases, specializing in PP (modified synthetic material) compression-molded cases. Our protective cases are designed for equipment storage and transport across industrial, outdoor, and professional applications. With a focus on durability, waterproofing, and impact resistance, our products serve clients worldwide.
+**慈溪市佐奈丹箱包有限公司 (CIXI ZONADE BAG CO., LTD.)** is a professional manufacturer based in Ningbo, China, specializing in high-quality protective cases and bags. Our products range from heavy-duty tool protective cases to shoulder straps and related accessories. We serve clients across Europe, the US, and Asia-Pacific, with a focus on consistent quality and strict export standards.
+
+- **Factory Address:** Sanjiangkou Village, Zhouxiang Town, Cixi City, Ningbo, China
+- **Website:** www.zonade.cn
+- **Phone:** +86-574-63339444 | **Fax:** +86-574-63339666
 
 ## Our Products
 
-### 优旦防护箱 (Youdan Protective Cases)
+### ZONADE Protective Cases
 
-Our flagship product line — compression-molded protective cases made from **modified PP synthetic material**. These cases provide rugged, waterproof, and dustproof protection for valuable equipment during storage and transport.
+Our flagship product line — compression-molded protective cases made from **impact-resistant PP/PE material**. These cases provide rugged, waterproof, and dustproof protection for valuable equipment during storage and transport.
 
-- **Material:** Modified PP (polypropylene) synthetic material — lightweight, high impact resistance, chemical resistant
+- **Material:** Impact-resistant PP (polypropylene) / PE — lightweight, high impact resistance, chemical resistant
 - **IP Rating:** **IP67** — fully dust-tight and protected against temporary immersion in water
 - **Operating Temperature:** **-40°C to +80°C** — suitable for extreme environments
 - **Closure:** Snap-shut latches with padlock holes for secure locking
 - **Hinge:** Integrated durable hinge design
 - **Handle:** Ergonomic carry handles (larger models feature reinforced handles)
-- **Interior:** Customizable foam inserts available (pre-scored pluck foam, solid foam, or empty)
+- **Interior:** Customizable foam inserts available (pre-scored pluck foam, solid foam, CNC-cut, or empty)
 
 ### Product Model Naming Convention
 
@@ -37,21 +41,18 @@ Example: **X-483621** = ~48cm inner length, ~36cm inner width, deep variant
 | **Large** | X-432917 ~ X-483621 | 437–475mm | Professional gear, photography equipment, firearms |
 | **Extra Large** | X-512917 ~ X-524031 | 517–530mm | Industrial equipment, military gear, large instruments |
 
-### Full Product Specifications
-
-See [pricing.md](pricing.md) for the complete model list with dimensions, weights, and pricing.
-
 ### Color Options
 
 - Standard: Black
-- Custom colors available for bulk orders (MOQ applies)
+- Custom colors available for bulk orders (MOQ: 100 units)
 
 ### Customization
 
 - **Custom Foam Inserts:** CNC-cut foam to fit your exact equipment dimensions
 - **Custom Colors:** Available for orders of 100+ units
 - **Logo Printing:** Silkscreen or pad printing available
-- **Brand Labels:** Custom nameplates and labels
+- **Brand Labels:** Custom nameplates and labels / barcode stickers
+- **Shoulder Straps:** Available as accessories
 
 ## Key Differentiators
 
@@ -60,13 +61,14 @@ See [pricing.md](pricing.md) for the complete model list with dimensions, weight
 - **Modified PP Material:** Lighter than traditional metal cases, stronger than standard plastic cases
 - **Wide Size Range:** 19 standard sizes from compact instrument cases to large equipment cases
 - **Cost-Effective:** Competitive pricing compared to imported brands with equivalent quality
-- **Customization Ready:** OEM/ODM services for foam inserts, colors, and branding
+- **Customization Ready:** OEM/ODM services for foam inserts, colors, branding, and barcode labels
 
 ## Certifications & Standards
 
 - **IP67** — Ingress Protection (dust-tight + 30-min immersion at 1m depth)
 - Material meets **RoHS** and **REACH** standards
 - Drop-tested and impact-resistant design
+- EU safety standards compliant
 - Custom certifications available on request
 
 ## Applications & Target Industries
@@ -80,6 +82,14 @@ See [pricing.md](pricing.md) for the complete model list with dimensions, weight
 
 ## Contact
 
-- **Website:** [your-company.com]
-- **Sales Email:** [sales@your-company.com]
-- **Phone:** [+86-xxx-xxxx-xxxx]
+- **Website:** www.zonade.cn
+- **Sales Team:**
+  - Vicky (徐萍) — sales1@zonade.cn | Phone: 86-13957429788
+  - Ciel / Wendy (钱茜茜) — sales2@zonade.cn
+  - Iris (孙雯雯) — sales3@zonade.cn | Phone: 13957472788
+- **Office Tel:** +86-574-63339444 | **Fax:** +86-574-63339666
+
+## Trade Shows We Attend
+
+- **Cologne Fair (科隆展)** — Hardware/Tools industry
+- **TiTE x IHT (Taiwan International Tools & Hardware Expo)** — Taiwan's largest hardware expo

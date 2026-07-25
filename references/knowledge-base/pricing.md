@@ -1,4 +1,4 @@
-# Pricing — 优旦防护箱 (Youdan Protective Cases)
+# Pricing — 佐奈丹 (ZONADE)
 
 ## Product Pricing Table
 
@@ -41,7 +41,7 @@ All prices in **RMB (¥)** per unit. Case weight is product net weight.
 
 | Property | Value |
 |----------|-------|
-| **Material** | Modified PP (polypropylene) synthetic material |
+| **Material** | Impact-resistant PP/PE |
 | **IP Rating** | IP67 (dust-tight + 30-min immersion at 1m) |
 | **Operating Temperature** | -40°C to +80°C |
 | **Standard Color** | Black (custom colors available for bulk orders) |
@@ -52,10 +52,10 @@ Volume discounts are available for larger orders. Please contact us for a specif
 
 | Quantity | Discount |
 |----------|----------|
-| 50+ | [X]% |
-| 100+ | [X]% |
-| 500+ | [X]% |
-| 1000+ | [X]% |
+| 50+ | Contact for quote |
+| 100+ | Contact for quote |
+| 500+ | Contact for quote |
+| 1000+ | Contact for quote |
 
 ## Customization Costs
 
@@ -63,14 +63,16 @@ Volume discounts are available for larger orders. Please contact us for a specif
 |--------|----------------|-----|
 | Custom foam insert (CNC-cut) | Quote required | 50 units |
 | Custom color | Quote required | 100 units |
-| Logo printing (silkscreen) | ¥[X]/unit | 100 units |
-| Custom nameplate/label | ¥[X]/unit | 100 units |
+| Logo printing (silkscreen) | Quote required | 100 units |
+| Custom nameplate/label | Quote required | 100 units |
+| Barcode labels/stickers | Added as separate line item on PI | Per order |
 
 ## Payment Terms
 
 - **Accepted Payment Methods:** T/T, L/C, PayPal
-- **Payment Terms:** 30% deposit, 70% before shipment
+- **Payment Terms:** 30% deposit (prepaid) to start production, 70% balance before shipment
 - **Currency:** RMB (USD/EUR available for international orders)
+- **PI Requirements:** All Proforma Invoices must be signed and stamped (with company seal/chop)
 
 ## Shipping Costs
 
