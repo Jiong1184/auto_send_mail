@@ -2,11 +2,16 @@
 
 ## About Our Company
 
-**慈溪市佐奈丹箱包有限公司 (CIXI ZONADE BAG CO., LTD.)** is a professional manufacturer based in Ningbo, China, specializing in high-quality protective cases and bags. Our products range from heavy-duty tool protective cases to shoulder straps and related accessories. We serve clients across Europe, the US, and Asia-Pacific, with a focus on consistent quality and strict export standards.
+**慈溪市佐奈丹箱包有限公司 (CIXI ZONADE BAG CO., LTD.)** is a professional manufacturer based in Ningbo, China — the country's key hardware industry hub. We specialize in PP (modified synthetic material) compression-molded protective cases, shoulder straps, and custom packaging solutions. Our products range from heavy-duty tool protective cases to shoulder straps and related accessories. We serve clients across Europe, the US, and Asia-Pacific, with a focus on consistent quality, strict export standards, and long-term OEM/ODM partnerships with major European distributors and retailers.
 
 - **Factory Address:** Sanjiangkou Village, Zhouxiang Town, Cixi City, Ningbo, China
+- **Tel:** +86-574-63339444 | **Fax:** +86-574-63339666
 - **Website:** www.zonade.cn
-- **Phone:** +86-574-63339444 | **Fax:** +86-574-63339666
+- **Sales Contacts:**
+  - Vicky / Xu Ping (sales1@zonade.cn, +86-13957429788) — Protective cases, export sales
+  - Ciel / Wendy / Yan Qianqian (sales2@zonade.cn) — Tool protective cases, overseas clients
+  - Iris / Sun Wenwen (sales3@zonade.cn, +86-13957472788) — OEM/ODM, custom packaging
+
 
 ## Our Products
 
@@ -63,6 +68,26 @@ Example: **X-483621** = ~48cm inner length, ~36cm inner width, deep variant
 - **Cost-Effective:** Competitive pricing compared to imported brands with equivalent quality
 - **Customization Ready:** OEM/ODM services for foam inserts, colors, branding, and barcode labels
 
+## Additional Product Lines
+
+### Shoulder Straps (Tramax Series)
+
+We manufacture heavy-duty shoulder straps for protective cases and tool bags. These are supplied to major European case manufacturers. Shoulder straps can be ordered as standalone products or bundled with protective cases.
+
+- Custom branding and labeling available
+- Typically ordered in bulk quantities (e.g., 3000pcs per shipment)
+- MOQ and pricing available on request
+
+### Custom Packaging Services
+
+We provide end-to-end packaging solutions for OEM/ODM clients, including:
+- **Color boxes** — Corrugated paper (PAP20) or cardboard (PAP21), custom printed with recycling marks
+- **Hangtags** — PAP21 with PP attachment band, custom artwork
+- **Labels/Stickers** — Applied directly to packaging; artwork revisions available
+- **Polybags** — PE material, printed to specification
+
+Packaging artwork follows EU recycling and material marking standards. Revision cycles typically take 1-2 weeks per round. During Chinese New Year, supplier timelines may extend — early planning recommended.
+
 ## Certifications & Standards
 
 - **IP67** — Ingress Protection (dust-tight + 30-min immersion at 1m depth)
@@ -84,12 +109,13 @@ Example: **X-483621** = ~48cm inner length, ~36cm inner width, deep variant
 
 - **Website:** www.zonade.cn
 - **Sales Team:**
-  - Vicky (徐萍) — sales1@zonade.cn | Phone: 86-13957429788
-  - Ciel / Wendy (钱茜茜) — sales2@zonade.cn
-  - Iris (孙雯雯) — sales3@zonade.cn | Phone: 13957472788
+  - Vicky / Xu Ping (sales1@zonade.cn, +86-13957429788) — Protective cases, export sales
+  - Ciel / Wendy / Yan Qianqian (sales2@zonade.cn) — Tool protective cases, overseas clients
+  - Iris / Sun Wenwen (sales3@zonade.cn, +86-13957472788) — OEM/ODM, custom packaging
 - **Office Tel:** +86-574-63339444 | **Fax:** +86-574-63339666
 
 ## Trade Shows We Attend
 
 - **Cologne Fair (科隆展)** — Hardware/Tools industry
 - **TiTE x IHT (Taiwan International Tools & Hardware Expo)** — Taiwan's largest hardware expo
+

@@ -58,26 +58,53 @@ Shipping weight ≈ product weight + packaging (200–500g depending on case siz
 
 1. Customer issues PO (Purchase Order)
 2. PI (Proforma Invoice) issued — must be signed and stamped by customer
-3. 30% deposit received → Production begins
-4. Production complete → Quality inspection
-5. Inspection passed → Packing and shipping
-6. B/L draft sent for customer review and confirmation
-7. B/L released after confirmation
+3. 30% deposit (prepaid) received → Production begins
+4. Production complete → Quality inspection (2-3 business days)
+5. Inspection passed → Packing and shipping arranged
+6. B/L (Bill of Lading) draft sent for customer review and verification:
+   - Verify total piece count (pcs)
+   - Verify gross weight (kg) and net weight (kg)
+   - Verify consignee name and delivery address
+7. Customer confirms B/L → Goods released
 8. 70% balance payment collected before/upon shipment
 9. Tracking number provided within 24 hours of dispatch
+
+**Important:** B/L details must be verified before release. Corrections after release are difficult and may incur additional fees.
+
 
 ## Customs & Documentation
 
 - Commercial invoice provided with every shipment
+- Packing list provided with every shipment
+- B/L (Bill of Lading) provided for sea freight shipments
 - Certificate of origin available on request
+- EU recycling/disposal compliance documentation available for packaging materials
 - Buyers are responsible for import duties and taxes in their country
 - We can recommend customs brokers for major ports
+
+### B/L (Bill of Lading) Key Details
+
+The B/L is the most critical shipping document. For each shipment, verify:
+- **Piece count:** Total number of cartons/pallets
+- **Gross weight:** Total weight including packaging
+- **Net weight:** Product weight excluding packaging
+- **Consignee:** Full company name, street address, city, postal code, country
+
+Example format:
+```
+Consignee: Plastica Panaro s.r.l.
+Address: Via Gramsci, 1370
+City: 41054 Marano sul Panaro (Mo)
+Country: Italy
+```
 
 ## After-Sales Support
 
 - 12-month warranty on all products
 - Technical support via your assigned sales representative
-- Replacement parts available for purchase
+- Technical support email: sales1@zonade.cn, sales2@zonade.cn, sales3@zonade.cn
+- Replacement parts available for purchase (latches, hinges, seals)
+
 - Remote troubleshooting available via video call
 
 ## Contact for Shipping Inquiries

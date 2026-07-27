@@ -66,13 +66,16 @@ Volume discounts are available for larger orders. Please contact us for a specif
 | Logo printing (silkscreen) | Quote required | 100 units |
 | Custom nameplate/label | Quote required | 100 units |
 | Barcode labels/stickers | Added as separate line item on PI | Per order |
+| Label/sticker update (artwork revision) | RMB 0.2/pc (~USD 0.03) | Per-order |
+| Packaging artwork revision | Included in order | Per-order |
 
 ## Payment Terms
 
-- **Accepted Payment Methods:** T/T, L/C, PayPal
-- **Payment Terms:** 30% deposit (prepaid) to start production, 70% balance before shipment
+- **Accepted Payment Methods:** T/T (bank transfer), L/C (letter of credit), PayPal
+- **Payment Terms:** 30% deposit (prepaid) upfront to start production, 70% balance before shipment
 - **Currency:** RMB (USD/EUR available for international orders)
-- **PI Requirements:** All Proforma Invoices must be signed and stamped (with company seal/chop)
+- **PI Requirements:** PI (Proforma Invoice) must be stamped with company seal and signed. For custom packaging orders, label/sticker fees must be listed as a separate line item rather than folded into the unit price.
+
 
 ## Shipping Costs
 

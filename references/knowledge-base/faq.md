@@ -98,6 +98,47 @@ A: Contact your assigned sales representative:
 - Iris (孙雯雯) — sales3@zonade.cn | 13957472788
 We typically respond within 24 hours on business days.
 
+## Order Process
+
+**Q: What is the typical order process?**
+A: Our standard order workflow:
+1. Customer sends PO (Purchase Order) with quantities and specifications
+2. We issue PI (Proforma Invoice) with estimated collection date
+3. Customer arranges 30% deposit payment
+4. Payment confirmed → production begins
+5. Production complete → quality inspection
+6. Shipping arranged → B/L (Bill of Lading) issued for verification
+7. B/L confirmed → goods released for shipment
+8. Remaining 70% payment settled before/during shipment
+
+**Q: How does the PI (Proforma Invoice) process work?**
+A: PI is issued after PO is received. Some buyers (especially European) require the PI to be stamped with the company seal and signed. For OEM/ODM orders with custom packaging, label/sticker surcharges should be listed as a separate line item on the PI rather than being folded into the unit price.
+
+**Q: What is involved in the B/L (Bill of Lading) verification?**
+A: Before shipment release, we send the B/L draft for the customer to verify: piece count (total pcs), gross weight (kg), net weight (kg), and consignee address details. Corrections must be confirmed before the goods are released.
+
+## OEM/ODM & Custom Packaging
+
+**Q: How does the custom packaging artwork process work?**
+A: Custom packaging (hangtags, color boxes, labels, polybags) involves multiple revision rounds:
+1. Buyer sends artwork requirements (recycling marks, material specs, barcodes, logos)
+2. We produce draft artwork for review
+3. Buyer gives feedback (font, alignment, icon sizes, colors)
+4. Revised artwork sent for approval
+5. Final version confirmed → production
+
+Typical turnaround: 1-2 weeks per revision round. During holiday periods (Chinese New Year), suppliers may close early — plan accordingly.
+
+**Q: What packaging materials do you use?**
+A:
+- **Color boxes**: PAP20 (corrugated paper / 瓦楞纸) or PAP21 (cardboard)
+- **Hangtags**: PAP21 with PP (polypropylene) attachment band
+- **Polybags**: PE (polyethylene) — only for certain product types
+- **Labels/Stickers**: Applied directly to packaging; update cost is RMB 0.2/pc
+
+**Q: Do packaging labels need to follow specific regulations?**
+A: Yes. For EU markets, packaging must include proper recycling/disposal marks (Entsorgungskennzeichen). Material codes (PAP20, PAP21, PP, PE) must be verified for each packaging component. Font specifications (e.g., Arial narrow, Calibri 9pt) and icon alignment are typically specified by the buyer.
+
 ## Partnership
 
 **Q: Do you work with distributors?**

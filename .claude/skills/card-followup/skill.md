@@ -25,6 +25,7 @@ allowed-tools:
   - mcp__filesystem__list_directory
   - mcp__filesystem__read_file
   - mcp__filesystem__search_files
+  - WebFetch
 ---
 
 # Card Follow-Up — AI Email Outreach Mini-CRM
@@ -206,16 +207,78 @@ Also read the cold outreach template:
 Read: references/templates/cold-outreach.md
 ```
 
+### Step 3.1b: Research Prospect's Company Website
+
+**IMPORTANT: Before generating the outreach email, visit the prospect's company
+website to understand their business. This is critical for personalization and
+effective product recommendations.**
+
+1. **Infer the website URL** from the prospect's email domain:
+   - `@company.com` → try `https://www.company.com` and `https://company.com`
+   - If the domain looks like a free email provider (gmail.com, qq.com, 163.com,
+     outlook.com, yahoo.com, etc.), skip this step and note: "⚠️ Personal email
+     address — no company website to research."
+
+2. **Fetch the website** using WebFetch:
+   ```
+   WebFetch:
+     url: "{inferred URL}"
+     prompt: "What does this company do? What industry are they in? What products
+              or services do they offer? Who are their target customers? What is
+              their market position (premium, mid-range, budget)? Any notable
+              information about their size, locations, or recent news?"
+   ```
+   **If the first URL fails**, try the alternative (with/without www, http vs https).
+   If both fail, note: "⚠️ Could not access company website — proceeding with
+   available information."
+
+3. **Analyze the prospect's profile** based on website research + contact info:
+   - **Industry vertical:** What sector are they in?
+   - **Business type:** Manufacturer, distributor, retailer, service provider?
+   - **Product relevance:** Which of our products/services are most relevant?
+   - **Positioning:** Are they price-sensitive or quality-focused?
+   - **Pain points:** What problems might they have that our products solve?
+
+4. **Record website research** in timeline:
+   ```
+   mcp__sqlite__write_query:
+     "INSERT INTO timeline (contact_id, event_type, description)
+      VALUES (?, 'website_research', 'Researched {domain}: {one-line summary of findings}')"
+   ```
+
 ### Step 3.2: Analyze Prospect & Generate Draft
 
-Based on the contact info (name, company, title) and the knowledge base content,
-analyze the prospect and generate a personalized outreach email.
+Based on the contact info (name, company, title), the knowledge base content,
+**AND the website research from Step 3.1b**, analyze the prospect and generate
+a personalized outreach email.
 
 Your analysis should consider:
 - What industry is this company in? What are their likely needs?
+- **How do our products specifically fit their business?** (Connect their
+  business profile to specific product features/benefits.)
 - Which products/services from the KB are most relevant?
+- **What specific use case can you envision?** (e.g., "A tool distributor like
+  yourself needs protective cases for premium tool sets")
 - What is a compelling subject line that would get this person to open?
 - Keep the email concise (3-4 paragraphs max), professional, and warm.
+
+**Product recommendation framework:**
+1. Identify the prospect's **industry vertical** from website research
+2. Match to **relevant product categories** from the KB:
+   - Industrial/manufacturing → Heavy-duty protective cases, large sizes
+   - Tool distributors → Tool protective cases, medium sizes, customizable foam
+   - Medical/lab equipment → Small/medium cases, IP67 waterproof, foam inserts
+   - Photography/videography → Large cases, customizable foam, protective padding
+   - Outdoor/sports → Durable cases, extreme temperature range, waterproof
+   - Military/security → Extra large cases, padlock holes, rugged design
+   - Electronics → Small/medium cases, ESD protection, dustproof
+   - General trading/distribution → Show full product range, emphasize OEM/ODM
+3. **Lead with the most relevant product** in the email — mention a specific model
+   or use case, not generic "we sell cases"
+4. If the prospect is a **distributor/trading company**, emphasize our OEM/ODM
+   capabilities and partnership benefits
+5. If the prospect is an **end user**, focus on specific product features that
+   solve their pain points
 
 **IMPORTANT: Check `language` in `references/crm-settings.json`. Generate the email in the configured language:**
 - `"en"` (default) → Generate in **ENGLISH**
@@ -376,8 +439,14 @@ Agent tool:
           - Detect auto-replies/OOO: classify as NOT_INTERESTED, reason "auto-reply/OOO"
           - Do NOT send auto-reply to auto-replies
        f. If interested AND autoApproveDrafts is ON:
+          - Read ALL previous email_log entries for this contact FIRST
+            (query by contact_id, ORDER BY sent_at/received_at ASC)
+          - For cold inbounds (Tier 3): attempt to fetch the prospect's
+            company website via WebFetch to understand their business
           - Read all KB docs + interested-reply template
-          - Compose auto-reply with quoted original email
+          - Compose auto-reply that: references conversation history,
+            matches tone of previous exchanges, addresses unresolved
+            items, and includes quoted original email
           - Send via SMTP (scripts/email-mcp-server)
           - Record outbound + update state to HANDED_OVER
     4. Update lastCheckedAt
@@ -656,7 +725,47 @@ Proceed automatically to Phase 6.
 
 ## Phase 6: Auto-Reply for Interested Prospects
 
-### Step 6.1: Search Knowledge Base
+### Step 6.0: Review Conversation History (Context Continuity)
+
+**IMPORTANT: Before composing a reply, read the full email history for this
+contact to maintain conversation continuity. The prospect should feel like
+they're continuing a conversation, not starting over.**
+
+1. **Query all previous email exchanges** for this contact:
+
+   mcp__sqlite__read_query:
+     "SELECT id, direction, subject, body, sent_at, received_at, message_id, in_reply_to
+      FROM email_log
+      WHERE contact_id = ?
+      ORDER BY COALESCE(sent_at, received_at) ASC"
+
+2. **Read the full body** of at least the most recent 3 emails (both inbound and outbound).
+   Pay special attention to:
+   - What was promised or discussed in previous emails?
+   - Are there any **unresolved questions** from earlier exchanges?
+   - What **tone and language style** was used (formal, casual, technical)?
+   - What **specific products, prices, or details** were mentioned?
+   - Are there any **pending action items** that need follow-up?
+
+3. **Match the tone** and language style of the conversation so far. If previous
+   emails were formal, stay formal. If they were conversational, match that.
+
+4. **Reference previous conversation points explicitly** — e.g., "As mentioned in
+   my previous email..." or "Following up on the pricing we discussed..."
+
+5. **If this is a cold inbound** (no previous outbound emails from us), this is
+   the first time we're contacting them. Use their inbound email as the sole
+   context and skip the history review.
+
+### Step 6.1: Research Prospect (Cold Inbound) or Search Knowledge Base
+
+**If this is a cold inbound (Tier 3 match)** and we have NOT previously
+researched this prospect's website:
+- Follow the website research process from **Step 3.1b** to understand their
+  business before composing the reply.
+
+**For all replies**, analyze the prospect's reply to identify specific questions
+or topics. Search the knowledge base for relevant documents:
 
 Analyze the prospect's reply to identify specific questions or topics.
 Search the knowledge base for relevant documents:
@@ -680,15 +789,22 @@ Read: references/templates/interested-reply.md
 just emailed — they are at their computer. Send immediately.**
 
 Compose a reply that:
-1. **Thanks the prospect** for their interest
-2. **Answers their specific questions** using information from the KB documents
-3. **Provides relevant details** (pricing, specifications, shipping info as appropriate)
-4. **Guides toward human follow-up** with a clear transition:
+1. **Continues the conversation naturally** — reference previous email context
+   and show you remember what was discussed before. The prospect should feel
+   this is a coherent thread, not isolated messages.
+2. **Thanks the prospect** for their interest
+3. **Answers their specific questions** using information from the KB documents.
+   If they asked multiple questions, address each one clearly.
+4. **Provides relevant details** (pricing, specifications, shipping info as appropriate).
+   Match the level of detail to what was previously discussed.
+5. **Addresses any unresolved items** from previous emails — don't let things
+   fall through the cracks. If something was promised earlier, acknowledge it.
+6. **Guides toward human follow-up** with a clear transition:
    "Our sales team will follow up with you regarding {specific topic — shipping, delivery, detailed quote, etc.}. In the meantime, feel free to contact us at {contact info from KB}."
-5. **Is professional and concise** — 3-4 paragraphs maximum
-6. **Use the configured language** from `references/crm-settings.json` → `language`:
+7. **Is professional and concise** — 3-4 paragraphs maximum
+8. **Use the configured language** from `references/crm-settings.json` → `language`:
    `"en"` → English, `"zh"` → 中文
-7. **MUST include the quoted original email below your reply**, separated by a standard
+9. **MUST include the quoted original email below your reply**, separated by a standard
    email quote delimiter. This ensures the recipient knows exactly which conversation
    this is part of. Format:
    ```
@@ -700,6 +816,13 @@ Compose a reply that:
    > ...
    ```
    Use the full body of the prospect's reply (the inbound email_log.body).
+
+**Context continuity checklist (self-review before presenting draft):**
+- [ ] Did I reference something specific from a previous email?
+- [ ] Did I answer ALL questions the prospect asked?
+- [ ] Did I address any pending items or promises from earlier?
+- [ ] Does the tone match the conversation history?
+- [ ] Would this make sense if the prospect reads the full thread?
 
 ### Step 6.3: Present Draft for Review (or Auto-Send)
 
@@ -938,3 +1061,9 @@ When the user selects "Setup/Verify system":
 9. **Keep the user informed** — always show what happened and what state the contact is in.
 10. **Use fully-qualified MCP tool names** — e.g., `mcp__sqlite__write_query`, not just `write_query`.
 11. **When in doubt, ask the user** — especially for editing drafts or handling edge cases.
+12. **ALWAYS research the prospect's company website** before sending cold outreach (Step 3.1b).
+    Use WebFetch to understand their industry, products, and market position. Tailor product
+    recommendations to their specific business profile.
+13. **ALWAYS review conversation history** before composing a reply (Step 6.0). Read at least
+    the last 3 email exchanges for context. Reference previous discussion points, match the
+    conversation tone, and address any unresolved questions or pending items.

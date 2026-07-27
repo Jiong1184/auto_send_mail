@@ -2,10 +2,10 @@
   "autoApproveDrafts": true,
   "language": "zh",
   "autoReplyPolling": {
-    "enabled": true,
+    "enabled": false,
     "intervalMinutes": 5,
     "cronJobId": "5227f2c4",
-    "lastCheckedAt": "2026-07-23T08:34:28.000Z",
+    "lastCheckedAt": "2026-07-23T10:13:25.222Z",
     "note": "When enabled with CronCreate, auto-checks replies every N minutes. lastCheckedAt tracks the most recent check time so each cycle only fetches new messages."
   },
   "note_language": "\"en\" for English (default), \"zh\" for Chinese. Controls email language and Skill UI prompts.",
@@ -15,7 +15,7 @@
       "name": "Sales Team",
       "email": "fanqionghong@newcowin.com",
       "role": "Product info, pricing, negotiation"
-    } 
+    }
   ],
   "note_teamMembers": "Configure your team members here. They appear as handoff targets when transferring a prospect to a human.",
   "workingHours": {
