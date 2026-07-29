@@ -12,13 +12,17 @@ A Claude Code-native mini-CRM for managing email outreach campaigns. Runs entire
 
 ## Quick Start
 
-1. Install email MCP dependencies:
+1. Install MCP dependencies:
    ```
    cd scripts/email-mcp-server && npm install
    ```
 2. Set up your QQ Mail credentials in `scripts/email-mcp-server/config.json`
-3. Initialize the database: run `/card-followup` and select "Setup database" on first run
-4. Add your product/company info to the KB documents in `references/knowledge-base/`
+3. Set up MinerU for OCR:
+   - Copy `references/mineru/config.example.yaml` → `references/mineru/config.yaml`
+   - Fill in your API token from https://mineru.net/apiManage/token
+   - Usage: `npm run ocr <image-path>` or `npx mineru-open-api extract <file> --model vlm`
+4. Initialize the database: run `/card-followup` and select "Setup database" on first run
+5. Add your product/company info to the KB documents in `references/knowledge-base/`
 
 ## How to Use
 

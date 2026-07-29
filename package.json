@@ -4,14 +4,17 @@
   "description": "A lightweight AI-powered email outreach system that runs entirely within **Claude Code** — no web server, no database server, no separate application. Built with MCP servers (backend) + a Skill (frontend).",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ocr": "bash scripts/ocr.sh"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "better-sqlite3": "^13.0.2",
     "imapflow": "^1.4.8",
+    "mineru-open-api": "^0.5.9",
     "nodemailer": "^9.0.3",
     "sql.js": "^1.14.1"
   }

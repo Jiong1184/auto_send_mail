@@ -1,0 +1,12 @@
+# MinerU API Configuration
+# Copy this file to config.yaml and fill in your token.
+# Get your token at: https://mineru.net/apiManage/token
+#
+# Usage:
+#   npx mineru-open-api extract <file> --model vlm --token $(cat references/mineru/config.yaml | grep '^token:' | head -1 | cut -d' ' -f2)
+
+# Your MinerU API token
+token: your-token-here
+
+# Default language (ch/en/korean/japan/arabic/etc)
+language: ch

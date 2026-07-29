@@ -14,7 +14,8 @@
       "mcp__filesystem__search_files",
       "Bash(node scripts/email-mcp-server/index.js)",
       "Bash(npm install)",
-      "Bash(npm ci)"
+      "Bash(npm ci)",
+      "Bash(mineru-open-api:*)"
     ]
   }
 }

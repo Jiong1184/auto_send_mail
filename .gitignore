@@ -1,11 +1,18 @@
 # Email credentials (contains SMTP/IMAP auth codes)
 scripts/email-mcp-server/config.json
 
+# MinerU API token
+references/mineru/config.yaml
+
 # Node.js dependencies
+node_modules/
 scripts/email-mcp-server/node_modules/
 
 # SQLite database
 data/crm.db
+
+# Business card images / email attachments
+references/emails/
 
 # OS files
 .DS_Store
