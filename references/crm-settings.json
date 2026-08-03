@@ -2,9 +2,9 @@
   "autoApproveDrafts": true,
   "language": "zh",
   "autoReplyPolling": {
-    "enabled": false,
+    "enabled": true,
     "intervalMinutes": 5,
-    "crontabEntry": "",
+    "crontabEntry": "*/5 * * * * bash /Users/fqh1184/projects/gitProjects/auto_send_mail/scripts/auto-check.sh",
     "lastCheckedAt": "2026-07-23T10:13:25.222Z",
     "note": "When enabled, a system crontab entry runs scripts/auto-check.sh every N minutes. crontabEntry stores the cron line for disabling. lastCheckedAt tracks the most recent check time so each cycle only fetches new messages."
   },
