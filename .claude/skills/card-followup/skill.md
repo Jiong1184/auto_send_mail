@@ -341,7 +341,7 @@ Proceed to Step 3.5 (Send Immediately).
    - Log timeline: "Outreach email scheduled for {time} ({prospect}'s timezone)"
    - Display: "Email scheduled. It will be sent automatically at {time} ({timezone})."
 4. **END FLOW HERE** — do NOT proceed to Step 3.5.
-5. The daemon (`auto-reply-daemon.js`) will pick up scheduled emails and send them.
+5. Send the email when the scheduled time arrives (the next Skill invocation or cron-triggered check will handle it).
 
 **If timezone is unknown (null):**
 Warn the user: "⚠️ No timezone set for this contact. Email will be sent immediately."

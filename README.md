@@ -47,8 +47,6 @@ NEW → EMAIL_SENT → INTERESTED → HANDED_OVER（人工跟进发货/物流）
 # Email MCP Server 依赖
 cd scripts/email-mcp-server && npm install
 
-# 项目根依赖（Daemon 用）
-cd ../.. && npm install
 ```
 
 ### 2. 配置邮箱
@@ -111,18 +109,8 @@ cp scripts/email-mcp-server/config.example.json scripts/email-mcp-server/config.
 ### 策略 A — 手动检查
 运行 `/card-followup` → "Check for new replies"。适合调试和低频使用。
 
-### 策略 B — CronCreate 定时唤醒（Claude Code 内）
-通过主菜单开启 "🔄 Enable auto-polling"，系统使用 `CronCreate` 每 10 分钟自动触发检查。Claude Code 需保持运行。
-
-### 策略 C — 外部守护进程（7×24）
-```bash
-# 单次检查（测试）
-node scripts/auto-reply-daemon.js --once
-
-# 持续运行（每 N 分钟轮询，间隔在 crm-settings.json 配置）
-node scripts/auto-reply-daemon.js
-```
-独立于 Claude Code 运行，系统开机即可后台工作。使用关键词匹配做意图分类，精度不如 Claude AI，但能 7×24 工作。
+### 策略 B — CronCreate 定时唤醒（Claude Code 内，推荐）
+通过主菜单开启 "🔄 Enable auto-polling"，系统使用 `CronCreate` 每 5 分钟自动触发检查。Claude Code 需保持运行。使用 AI 语义理解做意图分类和回复生成，精度最高。
 
 ## 团队转交功能
 
@@ -167,7 +155,6 @@ e:/FQH/work/demos/
 │   │   ├── package.json
 │   │   ├── config.example.json
 │   │   └── config.json                # (gitignored)
-│   ├── auto-reply-daemon.js           # 7×24 自动回复守护进程
 │   └── setup-db.js                    # 数据库建表参考
 ├── state-diagram.md                   # 状态机可视化
 ├── CLAUDE.md                          # 项目上下文
