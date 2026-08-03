@@ -76,12 +76,18 @@ The last three options should be toggles:
 When the user selects a toggle:
 1. Read `references/crm-settings.json`
 2. Flip the corresponding value. For auto-polling, flip `autoReplyPolling.enabled`.
-3. If ENABLING auto-polling: also use `CronCreate` to schedule the recurring check.
-   The cron prompt should be: "/card-followup automatically check for replies and process them.
-   If autoApproveDrafts is ON, send auto-replies immediately. If OFF, just record replies and classify intent."
-   Use the interval from `autoReplyPolling.intervalMinutes`.
-4. If DISABLING auto-polling: use `CronDelete` to cancel the auto-polling cron job.
-   (Store the job ID in crm-settings.json under `autoReplyPolling.cronJobId` for later deletion.)
+3. If ENABLING auto-polling:
+   a. Ensure `scripts/auto-check.sh` exists and is executable (`chmod +x`).
+   b. Calculate the crontab entry:
+      `"*/{intervalMinutes} * * * * cd {PROJECT_DIR} && bash scripts/auto-check.sh"`
+   c. Install via: `(crontab -l 2>/dev/null; echo "{crontabEntry}") | crontab -`
+   d. Store the exact crontab entry string in `autoReplyPolling.crontabEntry`.
+   e. Display: "✅ Auto-polling enabled — will check every {N} minutes via system cron."
+4. If DISABLING auto-polling:
+   a. Read `autoReplyPolling.crontabEntry`.
+   b. Run: `crontab -l 2>/dev/null | grep -vF "{crontabEntry}" | crontab -`
+   c. Clear `crontabEntry` (set to `""`).
+   d. Display: "⏸ Auto-polling disabled — cron entry removed."
 5. Write back to the file.
 6. Display confirmation.
 7. Re-display the main menu.
@@ -402,7 +408,7 @@ Display the error. Log as timeline event with event_type='error'. Offer retry or
 ### ⚡ Auto-Check Mode (cron-triggered)
 
 **If the skill was invoked with "auto-check" or "automatically" in the arguments**
-(which is how CronCreate triggers it), do NOT process replies inline. Instead,
+(triggered by system cron via `scripts/auto-check.sh`), do NOT process replies inline. Instead,
 spawn a sub-agent to do all the work in an isolated context. This keeps the
 main conversation context clean across hundreds of cycles.
 
@@ -435,9 +441,40 @@ Agent tool:
           (HANDED_OVER/NOT_INTERESTED/EXITED) — UNLESS this is a cold inbound
           (new contacts always start at NEW, never terminal)
        d. Record inbound (email_log + timeline)
-       e. Classify intent with AI reasoning
-          - Detect auto-replies/OOO: classify as NOT_INTERESTED, reason "auto-reply/OOO"
+       e. Classify intent with AI semantic analysis (NOT keyword matching).
+          Read the full reply body and understand the prospect's true intent
+          considering context, tone, negation, and specific asks.
+          - Detect auto-replies/OOO (check Auto-Submitted header, OOO patterns,
+            vacation responders): classify as NOT_INTERESTED, reason "auto-reply/OOO"
           - Do NOT send auto-reply to auto-replies
+          - Classify auto-replies as NOT_INTERESTED even if they contain
+            interested-sounding keywords (avoid reply loops)
+       e2. BEFORE sending auto-reply, check auto-reply count for this contact:
+          Query: SELECT COUNT(*) as cnt FROM email_log
+                 WHERE contact_id = ? AND direction = 'outbound'
+                 AND status = 'handed_over'
+          If cnt >= 3:
+            * Read previous email subjects and this inbound email body.
+            * Determine if this reply introduces a SUBSTANTIALLY NEW TOPIC
+              (new product category, new question type, new phase of
+              conversation — e.g., moving from pricing to shipping, or
+              from product A to product B).
+            * If NEW TOPIC detected:
+              - Log timeline: "New topic detected — resetting auto-reply
+                counter for {name}. Previous: {summary of old topic},
+                New: {summary of new topic}."
+              - Proceed to auto-reply (reset effectively — the new
+                auto-reply addresses the new topic).
+            * If SAME TOPIC (just continuing the same thread):
+              - Log timeline: "Auto-reply limit reached (3) on same topic
+                — human review required."
+              - Update workflow_state to HANDED_OVER with note:
+                "Human review required after 3 auto-replies on same topic."
+              - Do NOT send auto-reply. Proceed to next message.
+          If cnt < 3: proceed to auto-reply normally.
+       e3. Check for reply loop: if this contact's reply arrived within 5 minutes
+          of our last outbound email, AND this would be the 2nd+ auto-reply in
+          this thread, flag for human review instead of auto-replying.
        f. If interested AND autoApproveDrafts is ON:
           - Read ALL previous email_log entries for this contact FIRST
             (query by contact_id, ORDER BY sent_at/received_at ASC)
@@ -446,11 +483,62 @@ Agent tool:
           - Read all KB docs + interested-reply template
           - Compose auto-reply that: references conversation history,
             matches tone of previous exchanges, addresses unresolved
-            items, and includes quoted original email
+            items, and **MUST** include the full quoted original email
+            (using '> ' prefix) below every reply. This is NOT optional —
+            every auto-reply requires the full quoted original email for
+            conversation context. Format:
+            On {date}, {original sender} wrote:
+            > {quoted email body}
+          - Self-check before sending:
+            □ Referenced something specific from a previous email?
+            □ Answered ALL questions the prospect asked?
+            □ Quoted original email included below reply? (MUST — do not skip)
           - Send via SMTP (scripts/email-mcp-server)
-          - Record outbound + update state to HANDED_OVER
-    4. Update lastCheckedAt
+          - If send SUCCEEDS:
+            * Record outbound in email_log (status = 'handed_over')
+            * Update workflow_state to HANDED_OVER
+            * Log timeline: "Auto-reply sent."
+          - If send FAILS:
+            * Log timeline: "Auto-reply failed — will retry"
+            * Keep state as INTERESTED (do NOT advance to HANDED_OVER)
+            * Increment retry_count in workflow_state
+            * If retry_count >= 3: give up, update state to HANDED_OVER
+              with note "Auto-reply failed after 3 retries — human
+              attention needed.", log timeline event.
+            * NOTE: Because the inbound message is already recorded in
+              email_log, it won't be re-processed via the main message
+              loop. Instead, a RETRY STEP at the end of the cycle
+              handles pending auto-replies (see step 4.5 below).
+    4. Update lastCheckedAt to the current ISO timestamp.
+       ...
+    4.5. RETRY FAILED AUTO-REPLIES:
+       Query for contacts with pending auto-replies:
+         SELECT DISTINCT e.contact_id
+         FROM email_log e
+         JOIN workflow_state ws ON e.contact_id = ws.contact_id
+         WHERE ws.state = 'INTERESTED'
+         AND e.direction = 'inbound'
+         AND e.intent = 'interested'
+         AND ws.retry_count < 3
+         AND e.id NOT IN (
+           SELECT CAST(e2.in_reply_to AS INTEGER) FROM email_log e2
+           WHERE e2.direction = 'outbound' AND e2.in_reply_to IS NOT NULL
+         )
+       For each pending contact: re-read KB, compose auto-reply based
+       on the original inbound email, and attempt to send.
+       On success: record outbound (in_reply_to = original inbound
+       message_id), update state to HANDED_OVER, reset retry_count = 0.
+       On failure: increment retry_count, log timeline.
+    4. Update lastCheckedAt to the current ISO timestamp.
+       NOTE: This MUST happen AFTER all messages are processed (step 3),
+       not before. If the process crashes mid-way, messages will be
+       re-fetched on the next run but deduplicated by message_id — safe
+       to over-fetch. The dedup check in step 3 prevents duplicates.
     5. Return CONCISE 1-line summary per reply. For cold inbounds, prefix with "🆕"
+
+Note: Auto-reply in auto-check mode SKIPS the working-hours check
+(Step 3.4). The prospect just replied — they are at their computer.
+Send immediately.
 ```
 
 When the agent returns, display a one-line summary:
@@ -655,32 +743,43 @@ Return to main menu.
 
 ## Phase 5: Intent Classification
 
-### Step 5.1: Classify the Reply
+### Step 5.1: AI Semantic Intent Classification
 
-Read the complete reply body. Based on the content, classify the intent as
-`interested` or `not_interested`.
+**Use AI semantic analysis to understand the prospect's true intent.**
+Read the complete reply body and reason about the prospect's meaning.
+Do NOT use keyword matching — keywords can be misleading
+(e.g., "价格" in "价格太贵不需要" = not_interested, not interested).
 
-**INTERESTED indicators:**
-- Asks about pricing, features, or specifications
-- Requests a demo, trial, or sample
-- Wants to schedule a call or meeting
-- Expresses positive sentiment: "interested", "tell me more", "sounds good"
-- Asks about shipping, delivery, or lead times
-- Mentions a specific need or project timeline
-- Asks for a quote or proposal
-- Forwards the email to a colleague (secondary interest signal)
+When classifying, consider:
+- **Context and tone**: Is the prospect enthusiastic, neutral, dismissive?
+- **Negation patterns**: "not interested in the price but the product is great"
+  = interested but price-sensitive, NOT not_interested
+- **Conditional language**: "if you can do X, then we might consider" = interested
+- **Specific asks**: pricing, demo, sample, meeting, shipping — concrete asks
+  signal genuine interest
+- **Mixed signals**: "not right now but reach out next quarter" = interested with
+  timing note. "wrong person but contact X" = interested (gave a referral)
 
-**NOT_INTERESTED indicators:**
-- Explicitly declines: "not interested", "no thanks", "we're all set"
-- Says it's not the right time: "maybe later", "not now", "next quarter"
-- Wrong person: "this isn't my area", "please contact {someone else}"
-- Auto-reply / out-of-office (check for "Auto-Submitted" headers or OOO patterns in body)
-- Unsubscribe requests
-- Hostile or spam responses
+**Analysis checklist:**
+1. What is the prospect actually asking for? (concrete request vs vague response)
+2. Is there an underlying need even if the surface tone is negative?
+3. Would a reasonable salesperson follow up on this or close the lead?
+4. Is there any signal that should override keyword-level analysis?
 
-**IMPORTANT: If you detect an auto-reply or out-of-office message, classify as
-`not_interested` but note the reason as "auto-reply/OOO". Do NOT send an auto-reply
-to an auto-reply.**
+**Auto-reply/OOO detection (check BEFORE intent classification):**
+- Auto-Submitted header values: `auto-replied`, `auto-generated` → NOT_INTERESTED
+- Body patterns: "out of office", "vacation", "annual leave", "on leave",
+  "away from", "休假", "外出", "出差", "I will be back on", "returning on",
+  "limited access to email" → NOT_INTERESTED, reason "auto-reply/OOO"
+- Do NOT send auto-reply to an auto-reply under ANY circumstances
+
+**Reply loop detection:**
+- Query the last outbound for this contact: if sent within 5 minutes of this
+  reply AND this is already the 2nd+ exchange → NOT_INTERESTED, reason
+  "reply loop detected". Do NOT send another auto-reply.
+
+**IMPORTANT: Classify auto-replies as NOT_INTERESTED even if they contain
+interested-sounding keywords (avoid reply loops with other auto-responders).**
 
 ### Step 5.2: Record the Classification
 
@@ -720,6 +819,62 @@ Return to processing next reply or main menu.
 
 **If INTERESTED:**
 Proceed automatically to Phase 6.
+
+---
+
+### Step 5.4: Auto-Reply Limit Guard (SAFETY VALVE)
+
+**IMPORTANT: Before proceeding to Phase 6 auto-reply, check whether we have
+already sent too many auto-replies to this contact. Hard limit: 3 auto-replies
+per contact. This prevents infinite conversation loops and ensures human
+oversight for extended exchanges.**
+
+1. **Query the outbound auto-reply count** for this contact:
+   ```
+   mcp__sqlite__read_query:
+     "SELECT COUNT(*) as cnt FROM email_log
+      WHERE contact_id = ? AND direction = 'outbound' AND status = 'handed_over'"
+   ```
+
+2. **If count >= 3:**
+   - Read previous email subjects and this inbound email body to compare topics.
+   - **Determine if this reply introduces a SUBSTANTIALLY NEW TOPIC:**
+     * New product category or product line
+     * New question type (e.g., switching from pricing to shipping)
+     * New business phase (e.g., from inquiry to order discussion)
+     * Different use case or customer segment
+   - **If NEW TOPIC detected:**
+     * Log timeline:
+       ```
+       mcp__sqlite__write_query:
+         "INSERT INTO timeline (contact_id, event_type, description)
+          VALUES (?, 'auto_reply_limit',
+          'New topic detected — resetting auto-reply counter. Old: {summary}, New: {summary}')"
+       ```
+     * Proceed normally to Phase 6 (the new topic justifies a fresh auto-reply).
+   - **If SAME TOPIC (continuing the same thread):**
+     * Log timeline:
+       ```
+       mcp__sqlite__write_query:
+         "INSERT INTO timeline (contact_id, event_type, description)
+          VALUES (?, 'auto_reply_limit',
+          'Auto-reply limit reached (3 sent) on same topic. Human review required.')"
+       ```
+     * Update workflow state:
+       ```
+       mcp__sqlite__write_query:
+         "UPDATE workflow_state
+          SET state = 'HANDED_OVER',
+              last_action = 'Auto-reply limit reached (3). Human review required.',
+              state_entered_at = datetime('now'),
+              updated_at = datetime('now')
+          WHERE contact_id = ?"
+       ```
+     * Display: "⚠️ Auto-reply limit reached (3) — manual follow-up required for {name}."
+     * **SKIP auto-reply.** Do NOT proceed to Phase 6.
+
+3. **If count < 3:**
+   Proceed normally to Phase 6.
 
 ---
 
@@ -785,8 +940,9 @@ Read: references/templates/interested-reply.md
 
 ### Step 6.2: Compose Auto-Reply
 
-**Note: Reply emails skip the working-hours check (Step 3.4). The prospect
-just emailed — they are at their computer. Send immediately.**
+**Note: Reply emails (in BOTH manual mode AND auto-check mode) skip the
+working-hours check (Step 3.4). The prospect just replied — they are at
+their computer and working. Send immediately regardless of their local time.**
 
 Compose a reply that:
 1. **Continues the conversation naturally** — reference previous email context
@@ -868,19 +1024,19 @@ mcp__email__send_email:
 
 ### Step 6.5: Record and Finalize
 
-On success:
+**If send SUCCEEDS:**
 ```
 mcp__sqlite__write_query:
   "INSERT INTO email_log (contact_id, direction, message_id, in_reply_to, subject, body, status, sent_at, kb_doc_used)
    VALUES (?, 'outbound', ?, ?, ?, ?, 'handed_over', datetime('now'), ?)"
 ```
 
-Update workflow state:
+Update workflow state (reset retry_count):
 ```
 mcp__sqlite__write_query:
   "UPDATE workflow_state
    SET state = 'HANDED_OVER', last_action = 'Auto-reply sent. Awaiting human follow-up.',
-   state_entered_at = datetime('now'), updated_at = datetime('now')
+   retry_count = 0, state_entered_at = datetime('now'), updated_at = datetime('now')
    WHERE contact_id = ?"
 ```
 
@@ -890,6 +1046,23 @@ mcp__sqlite__write_query:
   "INSERT INTO timeline (contact_id, event_type, description, related_email_id)
    VALUES (?, 'handed_over', 'Auto-reply sent. REMINDER: Human follow-up required for shipping/delivery.', ?)"
 ```
+
+**If send FAILS:**
+```
+mcp__sqlite__write_query:
+  "UPDATE workflow_state
+   SET retry_count = retry_count + 1, last_action = 'Auto-reply failed — will retry',
+   updated_at = datetime('now')
+   WHERE contact_id = ?"
+```
+
+- Log timeline: "Auto-reply send failed (attempt {retry_count}/3). Will retry on next check."
+- If retry_count >= 3:
+  - Update state to HANDED_OVER: last_action = "Auto-reply failed after 3 retries — human attention needed."
+  - Log timeline: "Auto-reply permanently failed after 3 retries. Human review required."
+  - Display: "❌ Auto-reply failed 3 times for {name} — manual follow-up required."
+- Keep state as INTERESTED (so the retry query picks it up next cycle).
+- Display the error and offer retry or return to main menu.
 
 ### Step 6.6: Display Final Summary
 

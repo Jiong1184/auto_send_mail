@@ -57,15 +57,27 @@ cp scripts/email-mcp-server/config.example.json scripts/email-mcp-server/config.
 
 编辑 `scripts/email-mcp-server/config.json`，填入你的 QQ 邮箱和授权码。
 
-### 3. 填写知识库
+### 3. 启用自动轮询（可选）
+
+```bash
+# 生成长效认证 token（需要 Claude 订阅，仅需一次）
+claude setup-token
+
+# 确保脚本有执行权限
+chmod +x scripts/auto-check.sh
+```
+
+然后在 Claude Code 中运行 `/card-followup`，开启 "🔄 Enable auto-polling"。
+
+### 4. 填写知识库
 
 编辑 `references/knowledge-base/` 下的 4 个模板文件，填入实际的公司、产品、定价、物流信息。
 
-### 4. 初始化数据库
+### 5. 初始化数据库
 
 在 Claude Code 中运行 `/card-followup`，选择 "Setup/verify system"。
 
-### 5. 验证连通性
+### 6. 验证连通性
 
 系统会自动检测 SMTP 和 IMAP 连接状态。
 
@@ -109,8 +121,27 @@ cp scripts/email-mcp-server/config.example.json scripts/email-mcp-server/config.
 ### 策略 A — 手动检查
 运行 `/card-followup` → "Check for new replies"。适合调试和低频使用。
 
-### 策略 B — CronCreate 定时唤醒（Claude Code 内，推荐）
-通过主菜单开启 "🔄 Enable auto-polling"，系统使用 `CronCreate` 每 5 分钟自动触发检查。Claude Code 需保持运行。使用 AI 语义理解做意图分类和回复生成，精度最高。
+### 策略 B — bash + system cron（推荐，7×24）
+
+通过主菜单开启 "🔄 Enable auto-polling"，系统会安装一条 crontab 定时任务，
+每 N 分钟运行 `scripts/auto-check.sh`，调用 `claude -p` 在 headless 模式下自动检查回复。
+无需 Claude Code 保持运行，系统开机即可后台工作。
+
+**前置要求：**
+```bash
+# 一次性设置：生成长效认证 token（需要 Claude 订阅）
+claude setup-token
+
+# 确保脚本有执行权限
+chmod +x scripts/auto-check.sh
+```
+
+**工作原理：**
+1. cron 每分钟触发 `scripts/auto-check.sh`
+2. 脚本通过 `flock` 互斥锁防止重复运行
+3. 调用 `claude -p` 启动子 agent 完成：IMAP 检查 → 联系人匹配 → AI 语义分类 → 自动回复
+4. 日志写入 `data/auto-check.log`
+5. 使用 AI 语义理解做意图分类，精度最高；3 次自动回复上限防止循环
 
 ## 团队转交功能
 
@@ -131,14 +162,15 @@ cp scripts/email-mcp-server/config.example.json scripts/email-mcp-server/config.
 ## 项目结构
 
 ```
-e:/FQH/work/demos/
+auto_send_mail/
 ├── .claude/
 │   ├── settings.json                  # 权限预授权
 │   └── skills/card-followup/
-│       └── SKILL.md                   # 核心 Skill（6 阶段 + 转交）
+│       └── skill.md                   # 核心 Skill（6 阶段 + 转交）
 ├── .mcp.json                          # MCP Server 配置
 ├── data/
-│   └── crm.db                         # SQLite 数据库（5 张表）
+│   ├── crm.db                         # SQLite 数据库（5 张表）
+│   └── auto-check.log                 # 自动检查日志
 ├── references/
 │   ├── crm-settings.json              # 系统设置（语言、审批、轮询、团队成员）
 │   ├── knowledge-base/                # 知识库（Markdown）
@@ -155,8 +187,9 @@ e:/FQH/work/demos/
 │   │   ├── package.json
 │   │   ├── config.example.json
 │   │   └── config.json                # (gitignored)
+│   ├── auto-check.sh                  # bash + cron 自动检查脚本
+│   ├── send-scheduled-email.js        # 定时邮件发送
 │   └── setup-db.js                    # 数据库建表参考
-├── state-diagram.md                   # 状态机可视化
 ├── CLAUDE.md                          # 项目上下文
 ├── .gitignore
 └── README.md
@@ -192,7 +225,7 @@ e:/FQH/work/demos/
   "autoReplyPolling": {
     "enabled": false,
     "intervalMinutes": 10,
-    "cronJobId": ""
+    "crontabEntry": ""
   },
   "teamMembers": [
     { "name": "Sales Team", "email": "sales@company.com", "role": "Product info, pricing, negotiation" },

@@ -4,12 +4,12 @@
   "autoReplyPolling": {
     "enabled": false,
     "intervalMinutes": 5,
-    "cronJobId": "5227f2c4",
+    "crontabEntry": "",
     "lastCheckedAt": "2026-07-23T10:13:25.222Z",
-    "note": "When enabled with CronCreate, auto-checks replies every N minutes. lastCheckedAt tracks the most recent check time so each cycle only fetches new messages."
+    "note": "When enabled, a system crontab entry runs scripts/auto-check.sh every N minutes. crontabEntry stores the cron line for disabling. lastCheckedAt tracks the most recent check time so each cycle only fetches new messages."
   },
   "note_language": "\"en\" for English (default), \"zh\" for Chinese. Controls email language and Skill UI prompts.",
-  "note_autoApprove": "Set to true to skip draft review and send emails immediately. When combined with autoReplyPolling, the full pipeline runs hands-free.",
+  "note_autoApprove": "Set to true to skip draft review and send emails immediately. When combined with autoReplyPolling (bash+cron), the full pipeline runs hands-free 24/7.",
   "teamMembers": [
     {
       "name": "Sales Team",
