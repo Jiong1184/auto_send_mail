@@ -24,5 +24,40 @@
     "note": "Working hours in prospect's local time (24h format). Outreach emails are only sent during this window. Reply emails ignore this restriction."
   },
   "defaultTimezone": "Asia/Shanghai",
-  "note_timezone": "Default timezone when TLD lookup fails. TLD mapping: .cn→Asia/Shanghai, .jp→Asia/Tokyo, .kr→Asia/Seoul, .de→Europe/Berlin, .fr→Europe/Paris, .uk→Europe/London, .au→Australia/Sydney, .in→Asia/Kolkata, .br→America/Sao_Paulo, .us→America/New_York, .ca→America/Toronto"
+  "note_timezone": "Default timezone when TLD lookup fails. TLD mapping: .cn→Asia/Shanghai, .jp→Asia/Tokyo, .kr→Asia/Seoul, .de→Europe/Berlin, .fr→Europe/Paris, .uk→Europe/London, .au→Australia/Sydney, .in→Asia/Kolkata, .br→America/Sao_Paulo, .us→America/New_York, .ca→America/Toronto",
+  "im": {
+    "enabled": true,
+    "note": "IM integration via cc-connect. Set enabled:false to disable all IM push notifications.",
+    "platforms": ["wecom", "feishu"],
+    "note_platforms": "Active IM platforms. Push notifications are sent to ALL active platforms via cc-connect.",
+    "notifications": {
+      "newReply": true,
+      "note_newReply": "Push when a prospect replies (Phase 4)",
+      "interestedIntent": true,
+      "note_interestedIntent": "Push when a prospect is classified as INTERESTED (Phase 5)",
+      "coldInbound": true,
+      "note_coldInbound": "Push when a new cold inbound lead is detected (Phase 4 Tier 3)",
+      "autoReplySent": true,
+      "note_autoReplySent": "Push when auto-reply is sent and contact is handed over (Phase 6)",
+      "systemError": true,
+      "note_systemError": "Push when SMTP/IMAP or other system errors occur",
+      "emailSent": false,
+      "note_emailSent": "Push when outreach email is sent (Phase 3) — noisy, off by default",
+      "notInterested": false,
+      "note_notInterested": "Push when prospect is classified NOT_INTERESTED (Phase 5) — noisy, off by default"
+    },
+    "inbound": {
+      "enabled": true,
+      "note": "IM inbound card processing. Set to true to allow sending business card images via Feishu/WeCom. When enabled, approval flows move to IM (reply-based) instead of terminal.",
+      "approvalMode": "reply",
+      "note_approvalMode": "'reply' means user replies '批准'/'拒绝' to approve/reject drafts via WeCom. Future: 'card' for interactive card buttons.",
+      "approvalTimeoutMinutes": 30,
+      "note_approvalTimeout": "If no approval reply within this time, the draft expires."
+    },
+    "allow_from": {
+      "wecom": [],
+      "feishu": [],
+      "note": "Per-platform user whitelists. Feishu has HMAC signature — allow_from is optional but recommended. WeCom has no HMAC signature — allow_from is CRITICAL."
+    }
+  }
 }

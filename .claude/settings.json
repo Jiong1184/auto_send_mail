@@ -15,7 +15,8 @@
       "Bash(node scripts/email-mcp-server/index.js)",
       "Bash(npm install)",
       "Bash(npm ci)",
-      "Bash(mineru-open-api:*)"
+      "Bash(mineru-open-api:*)",
+      "Bash(cc-connect:*)"
     ]
   }
 }

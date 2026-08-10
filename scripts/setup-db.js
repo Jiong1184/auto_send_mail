@@ -61,6 +61,22 @@ const CREATE_TABLES_SQL = [
       related_email_id INTEGER REFERENCES email_log(id),
       created_at       TEXT NOT NULL DEFAULT (datetime('now'))
   );`,
+
+  `CREATE TABLE IF NOT EXISTS pending_approvals (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      contact_id      INTEGER NOT NULL REFERENCES contacts(id),
+      email_log_id    INTEGER REFERENCES email_log(id),
+      platform        TEXT NOT NULL DEFAULT 'feishu'
+                      CHECK(platform IN ('feishu','wecom')),
+      user_open_id    TEXT,
+      status          TEXT NOT NULL DEFAULT 'pending'
+                      CHECK(status IN ('pending','approved','rejected','expired')),
+      draft_subject   TEXT,
+      draft_body      TEXT,
+      created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at      TEXT NOT NULL DEFAULT (datetime('now', '+30 minutes')),
+      responded_at    TEXT
+  );`,
 ];
 
 // Print SQL for use with SQLite MCP server's create_table tool

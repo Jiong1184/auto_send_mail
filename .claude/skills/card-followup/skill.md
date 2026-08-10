@@ -26,6 +26,35 @@ allowed-tools:
   - mcp__filesystem__read_file
   - mcp__filesystem__search_files
   - WebFetch
+  - Bash(cc-connect send:*)
+---
+
+## IM Push Notifications (cc-connect)
+
+When `im.enabled` is `true` in `references/crm-settings.json`, push critical events to WeCom (企业微信) via cc-connect. Read the entire `im` section from `references/crm-settings.json` at the start of each Phase to determine which notifications are enabled.
+
+**Push command pattern:**
+```bash
+cc-connect send --project crm -m "MESSAGE_TEXT"
+```
+
+**Push points (each gated by `im.notifications.{key}`):**
+
+| Trigger | Config Key | Message Template |
+|---------|-----------|-----------------|
+| New reply detected (Phase 4) | `newReply` | `📨 {name} ({company}) replied!\nIntent: analyzing...\n{first 100 chars of body}` |
+| Cold inbound lead (Phase 4 Tier 3) | `coldInbound` | `🆕 New Lead! {name} ({email}) reached out proactively\nSubject: {subject}` |
+| Intent = INTERESTED (Phase 5) | `interestedIntent` | `✅ {name} ({company}) is INTERESTED!\nReason: {reason}` |
+| Auto-reply sent (Phase 6) | `autoReplySent` | `✉️ Auto-reply sent to {name} ({email})\nStatus: HANDED_OVER\n⚠️ Human follow-up needed for shipping/delivery` |
+| System error | `systemError` | `❌ System Error: {error_message}` |
+
+**CRITICAL RULES:**
+1. ALWAYS check `im.enabled` before pushing. If `false`, skip ALL IM operations.
+2. ALWAYS check the per-notification toggle (`im.notifications.{key}`) before each push.
+3. Push notifications are FIRE-AND-FORGET — do NOT block the workflow on push failures.
+4. If `cc-connect` command is not found, silently skip (do not error).
+5. Keep push messages concise — WeCom displays have limited width.
+
 ---
 
 # Card Follow-Up — AI Email Outreach Mini-CRM
@@ -48,6 +77,32 @@ step and send immediately — but still log everything.
 
 ---
 
+## Phase 0: IM Context Detection
+
+**Before entering Phase 1**, check if this session was invoked from an IM platform
+(cc-connect routes IM messages to Claude Code as standalone sessions).
+
+**If the prompt contains `[Image saved at:` (IM image message):**
+- This is a business card image sent via Feishu/WeCom.
+- **Do NOT show the interactive menu.** Instead, follow the **IM Inbound Processor**
+  workflow defined in `.claude/agents/im-inbound-processor.md`:
+  1. Read the image file at the path specified in the prompt
+  2. Run `bash scripts/ocr.sh <image_path>` to OCR the card
+  3. Extract contact info (email, name, company, title, phone)
+  4. Dedup check → create contact → generate draft → push to IM for approval
+  5. Use `cc-connect send --project crm -m "..."` for all responses
+- **Do NOT use AskUserQuestion** — IM sessions are headless.
+
+**If the prompt is a short text message containing 「批准」or「拒绝」:**
+- Check `pending_approvals` table for pending records.
+- If found: process the approval (send or cancel the email draft).
+- Use `cc-connect send --project crm -m "..."` to confirm.
+- If no pending approvals: treat as general IM chat (send help message).
+
+**Otherwise:** This is a normal terminal session. Proceed to Phase 1.
+
+---
+
 ## Phase 1: Main Menu
 
 **Before showing the menu:** Read `references/crm-settings.json` to check the
@@ -61,6 +116,8 @@ Include status indicators in the question header:
 - `language: "zh"` → "🌐 中文"
 - `autoReplyPolling.enabled: true` → "🔄 Auto-polling ON"
 - `autoReplyPolling.enabled: false` → "⏸ Auto-polling OFF"
+- `im.enabled: true` → "💬 IM ON ({platforms})"
+- `im.enabled: false` → "💬 IM OFF"
 
 1. **Input new business card and send outreach email** — Phases 2-3
 2. **Check for new replies** — Phases 4-6
@@ -72,6 +129,7 @@ The last three options should be toggles:
 - Toggle auto-approve: "⚡ Enable auto-approve" or "🔍 Disable auto-approve"
 - Toggle language: "🌐 Switch to 中文" or "🌐 Switch to English"
 - Toggle auto-polling: "🔄 Enable auto-polling" or "⏸ Disable auto-polling"
+- Toggle IM notifications: "💬 Enable IM notifications" or "💬 Disable IM notifications"
 
 When the user selects a toggle:
 1. Read `references/crm-settings.json`
@@ -88,9 +146,17 @@ When the user selects a toggle:
    b. Run: `crontab -l 2>/dev/null | grep -vF "{crontabEntry}" | crontab -`
    c. Clear `crontabEntry` (set to `""`).
    d. Display: "⏸ Auto-polling disabled — cron entry removed."
-5. Write back to the file.
-6. Display confirmation.
-7. Re-display the main menu.
+5. If TOGGLING IM notifications:
+   a. Flip `im.enabled` in `references/crm-settings.json`.
+   b. If ENABLING IM:
+      - Display: "💬 IM notifications enabled — will push to WeCom (企业微信) via cc-connect."
+   c. If DISABLING IM:
+      - Display: "💬 IM notifications disabled — no push messages will be sent."
+   d. Write back to the file.
+   e. Display confirmation.
+6. Write back to the file.
+7. Display confirmation.
+8. Re-display the main menu.
 
 Use a multiSelect question with a single choice.
 
@@ -400,6 +466,8 @@ Return to main menu.
 
 **If send fails:**
 Display the error. Log as timeline event with event_type='error'. Offer retry or return to main menu.
+- If `im.enabled` AND `im.notifications.systemError`:
+  Run `cc-connect send --project crm -m "❌ Outreach email failed for {name} ({email})\nError: {error_summary}"` (fire-and-forget).
 
 ---
 
@@ -437,9 +505,14 @@ Agent tool:
           Tier 2: Match by sender email → contacts.email
           Tier 3: COLD INBOUND — auto-create contact, detect timezone,
                   record as event_type='cold_inbound'
-       c. Skip if existing contact is in terminal state
-          (HANDED_OVER/NOT_INTERESTED/EXITED) — UNLESS this is a cold inbound
-          (new contacts always start at NEW, never terminal)
+       c. Check existing contact state (skip this check for cold inbounds —
+          new contacts always start at NEW, never terminal):
+          - HANDED_OVER: Record the reply (email_log + timeline with
+            event_type='reply_recorded', description noting "Post-handoff
+            reply — recorded only, no auto-processing") then SKIP intent
+            classification and auto-reply. Do NOT change workflow state.
+            The follow-up person is handling this conversation manually.
+          - NOT_INTERESTED/EXITED: Skip entirely (do not record).
        d. Record inbound (email_log + timeline)
        e. Classify intent with AI semantic analysis (NOT keyword matching).
           Read the full reply body and understand the prospect's true intent
@@ -617,6 +690,8 @@ mcp__sqlite__write_query:
   "INSERT INTO timeline (contact_id, event_type, description, related_email_id)
    VALUES (?, 'reply_received', 'Reply received from {name}: \"{first 80 chars of body}\"', ?)"
 ```
+- If `im.enabled` AND `im.notifications.newReply`:
+  Run `cc-connect send --project crm -m "📨 {name} ({company}) replied!\nSubject: {subject}"` (fire-and-forget).
 - Proceed to Phase 5 for this contact.
 
 ---
@@ -651,6 +726,8 @@ mcp__sqlite__write_query:
   "INSERT INTO timeline (contact_id, event_type, description, related_email_id)
    VALUES (?, 'reply_received', 'Reply received from {name} (matched by sender email, Message-ID chain broken): \"{first 80 chars of body}\"", ?)"
 ```
+- If `im.enabled` AND `im.notifications.newReply`:
+  Run `cc-connect send --project crm -m "📨 {name} ({company}) replied (matched by sender email)!\nSubject: {subject}"` (fire-and-forget).
 - Proceed to Phase 5 for this contact.
 
 ---
@@ -721,6 +798,9 @@ Display prominently:
    Auto-created contact record. Proceeding to intent classification.
 ```
 
+- If `im.enabled` AND `im.notifications.coldInbound`:
+  Run `cc-connect send --project crm -m "🆕 New Lead! {name} ({email}) reached out proactively\nSubject: {subject}"` (fire-and-forget).
+
 **Step 4.2.3g: Proceed to Phase 5**
 Classify intent and (if interested) auto-reply just like any matched reply.
 
@@ -729,6 +809,30 @@ Classify intent and (if interested) auto-reply just like any matched reply.
 **If ALL three tiers fail** (e.g., can't even parse a valid sender email):
 Display: "Message from {from} ({subject}) — could not parse sender or match to any contact. Skipping."
 Skip this message and continue processing others.
+
+### Step 4.2b: Check for Post-Handoff Contacts
+
+**Before proceeding to Phase 5 for each matched reply**, check the contact's
+current workflow state:
+
+- **If state is HANDED_OVER:** This contact has already been handed over to a
+  human follow-up person. The follow-up person is now communicating with the
+  prospect outside the CRM. **Record the reply but do NOT process further:**
+  ```
+  mcp__sqlite__write_query:
+    "INSERT INTO email_log (contact_id, direction, message_id, in_reply_to, subject, body, status, received_at)
+     VALUES (?, 'inbound', ?, ?, ?, ?, 'received', datetime('now'))"
+  ```
+  ```
+  mcp__sqlite__write_query:
+    "INSERT INTO timeline (contact_id, event_type, description, related_email_id)
+     VALUES (?, 'reply_recorded', '📝 Post-handoff reply recorded (no auto-processing): \"{first 80 chars of body}\"', ?)"
+  ```
+  Display: "📝 Reply from {name} ({email}) recorded. Contact is in HANDED_OVER —
+  follow-up person is handling this conversation. No auto-processing."
+  **Skip Phase 5 and Phase 6** for this contact. Continue to the next message.
+
+- **If state is NOT_INTERESTED or EXITED:** Skip entirely. Do not record.
 
 ### Step 4.3: Process Each Matched Reply
 
@@ -819,6 +923,8 @@ Return to processing next reply or main menu.
 
 **If INTERESTED:**
 Proceed automatically to Phase 6.
+- If `im.enabled` AND `im.notifications.interestedIntent`:
+  Run `cc-connect send --project crm -m "✅ {name} ({company}) is INTERESTED!\nReason: {reason}\nSummary: {first 100 chars of reply body}"` (fire-and-forget).
 
 ---
 
@@ -1047,6 +1153,9 @@ mcp__sqlite__write_query:
    VALUES (?, 'handed_over', 'Auto-reply sent. REMINDER: Human follow-up required for shipping/delivery.', ?)"
 ```
 
+- If `im.enabled` AND `im.notifications.autoReplySent`:
+  Run `cc-connect send --project crm -m "✉️ Auto-reply sent to {name} ({email})\nStatus: HANDED_OVER\n⚠️ Human follow-up needed for shipping/delivery"` (fire-and-forget).
+
 **If send FAILS:**
 ```
 mcp__sqlite__write_query:
@@ -1240,3 +1349,8 @@ When the user selects "Setup/Verify system":
 13. **ALWAYS review conversation history** before composing a reply (Step 6.0). Read at least
     the last 3 email exchanges for context. Reference previous discussion points, match the
     conversation tone, and address any unresolved questions or pending items.
+14. **Post-handoff replies are RECORD-ONLY.** When a contact is in HANDED_OVER state, any
+    further replies (from prospect or follow-up person) must be recorded to email_log and
+    timeline (event_type='reply_recorded') but MUST NOT trigger intent classification (Phase 5)
+    or auto-reply (Phase 6). The follow-up person is handling the conversation manually.
+    Do NOT change the workflow state — leave it as HANDED_OVER.
