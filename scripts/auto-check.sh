@@ -12,7 +12,9 @@
 
 set -euo pipefail
 
-PROJECT_DIR="/Users/fqh1184/projects/gitProjects/auto_send_mail"
+# ── Detect project dir (works on both macOS and Linux) ───────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$PROJECT_DIR/data/auto-check.log"
 LOCK_FILE="/tmp/auto-check-crm.lock"
 
@@ -26,7 +28,13 @@ flock -n 200 || {
 # ── Log rotation: keep max 50MB ──────────────────────────────
 MAX_LOG_SIZE_MB=50
 if [ -f "$LOG_FILE" ]; then
-    LOG_SIZE=$(stat -f%z "$LOG_FILE" 2>/dev/null || echo 0)
+    # Cross-platform file size detection (macOS stat -f%z vs Linux stat -c%s)
+    if stat -f%z "$LOG_FILE" 2>/dev/null; then
+        LOG_SIZE=$(stat -f%z "$LOG_FILE" 2>/dev/null)   # macOS
+    else
+        LOG_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null)   # Linux
+    fi
+    LOG_SIZE=${LOG_SIZE:-0}
     LOG_SIZE_MB=$((LOG_SIZE / 1048576))
     if [ "$LOG_SIZE_MB" -gt "$MAX_LOG_SIZE_MB" ]; then
         # Keep last 20,000 lines (~2-3MB) as a tail, discard older entries
@@ -37,8 +45,8 @@ fi
 
 # ── Environment ──────────────────────────────────────────────
 cd "$PROJECT_DIR"
-export HOME=/Users/fqh1184
-export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+export HOME="${HOME:-/home/$USER}"
+export PATH="$HOME/.npm-global/bin:/usr/local/bin:$PATH"
 
 # ── Run Claude in headless mode ──────────────────────────────
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🔍 Starting auto-check..." >> "$LOG_FILE"
