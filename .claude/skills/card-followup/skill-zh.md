@@ -438,6 +438,20 @@ mcp__sqlite__write_query:
 
 ## 阶段 4：回复检查
 
+**进入回复检查前，清理过期审批：**
+```sql
+mcp__sqlite__read_query:
+  "SELECT pa.id, c.name, c.email FROM pending_approvals pa
+   JOIN contacts c ON pa.contact_id = c.id
+   WHERE pa.status = 'pending' AND pa.expires_at < datetime('now')"
+```
+对于每一条过期记录：
+```sql
+mcp__sqlite__write_query:
+  "UPDATE pending_approvals SET status = 'expired' WHERE id = ?"
+```
+记录时间线：`事件: draft_expired, 描述: "飞书审批草稿已过期——{name}（{email}）"`
+
 ### ⚡ 自动检查模式（cron 触发）
 
 **如果技能在参数中带有 "auto-check" 或 "automatically" 被调用**（由系统 cron 通过 `scripts/auto-check.sh` 触发），不要内联处理回复。而是派生一个子代理在隔离上下文中完成所有工作。这样可以在数百个周期中保持主对话上下文的整洁。

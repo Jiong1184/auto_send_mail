@@ -473,6 +473,20 @@ Display the error. Log as timeline event with event_type='error'. Offer retry or
 
 ## Phase 4: Reply Checking
 
+**Before checking replies, clean up expired approvals:**
+```sql
+mcp__sqlite__read_query:
+  "SELECT pa.id, c.name, c.email FROM pending_approvals pa
+   JOIN contacts c ON pa.contact_id = c.id
+   WHERE pa.status = 'pending' AND pa.expires_at < datetime('now')"
+```
+For each expired record:
+```sql
+mcp__sqlite__write_query:
+  "UPDATE pending_approvals SET status = 'expired' WHERE id = ?"
+```
+Log timeline: `event: draft_expired, description: "IM approval draft expired — {name} ({email})"`
+
 ### ⚡ Auto-Check Mode (cron-triggered)
 
 **If the skill was invoked with "auto-check" or "automatically" in the arguments**

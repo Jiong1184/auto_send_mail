@@ -18,11 +18,12 @@ Read `references/crm-settings.json` to get:
 - `autoApproveDrafts` — whether to auto-send replies
 
 ### 2. Poll IMAP inbox
-Use the script at `scripts/email-mcp-server/` which has nodemailer + imapflow
-installed. Run a Node.js one-liner to:
+Use the MCP email server at `scripts/email-mcp-server/` which has nodemailer + imapflow
+installed. Determine the project directory from the current working directory, then
+run a Node.js one-liner to:
 
 ```bash
-cd e:/FQH/work/demos/scripts/email-mcp-server && node -e "
+PROJECT_DIR=$(pwd) && cd "$PROJECT_DIR/scripts/email-mcp-server" && node -e "
 const{ImapFlow}=require('imapflow');const config=require('./config.json');
 (async()=>{
 const since=new Date('LAST_CHECKED_AT_ISO');
@@ -50,7 +51,7 @@ If `lastCheckedAt` is null, use a date 7 days ago.
 Query the SQLite database at `data/crm.db` using sql.js:
 
 ```bash
-cd e:/FQH/work/demos && node -e "
+PROJECT_DIR=$(pwd) && cd "$PROJECT_DIR" && node -e "
 const initSqlJs=require('sql.js');const fs=require('fs');
 (async()=>{
 const SQL=await initSqlJs();const db=new SQL.Database(fs.readFileSync('data/crm.db'));
@@ -68,16 +69,30 @@ Try matching by subject (strip "Re:", "回复:", "Fwd:" prefixes) or by sender e
 against the contacts table and existing outbound email_log entries.
 
 ### 5. Check terminal state
-If the matched contact is in HANDED_OVER, NOT_INTERESTED, or EXITED state → skip
-(but still record the reply — just don't auto-respond).
+- If matched contact is in **HANDED_OVER**: Record the reply (email_log + timeline
+  with event_type='reply_recorded') then skip — do NOT classify intent or auto-reply.
+  The follow-up person is handling this conversation manually. Do not change workflow state.
+- If matched contact is in **NOT_INTERESTED** or **EXITED**: Skip entirely (do not record).
+- Cold inbounds (Tier 3) always start at NEW — terminal state check does not apply.
 
 ### 6. Record inbound email
 Insert into email_log (direction='inbound', status='received') and timeline.
 
 ### 7. Classify intent
-Read the decoded reply body. Classify as:
+Read the decoded reply body. **FIRST check for bounces and auto-responders** — these must be classified as NOT_INTERESTED regardless of content:
+
+| Detection | Signal |
+|-----------|--------|
+| **Bounce / NDR** | Subject matches "Undelivered Mail", "Returned Mail", "Mail Delivery", "退信", "系统退信", "failure notice" |
+| **Bounce body** | Body contains "delivery failure", "could not be delivered", "address rejected", "user unknown", "mailbox full" |
+| **OOO / Vacation** | `Auto-Submitted` header = "auto-replied" or "auto-generated" |
+| **OOO body** | Body contains "out of office", "on vacation", "休假", "自动回复", "不在办公室" |
+
+If bounce or OOO detected → classify as **not_interested**, reason="bounce" or "auto-reply/OOO". Do NOT auto-reply, even if autoApproveDrafts is ON.
+
+For all other replies, classify as:
 - **interested**: asks about products, pricing, demo, shipping, wants to talk
-- **not_interested**: declines, wrong person, auto-reply/OOO, unsubscribe
+- **not_interested**: declines, wrong person, unsubscribe
 - **unknown**: ambiguous
 
 Update email_log.intent and email_log.intent_reason.
@@ -104,7 +119,7 @@ c) **Compose auto-reply**: Write a professional reply in the configured language
 
 d) **Send via SMTP**: Use nodemailer from `scripts/email-mcp-server/` to send:
    ```bash
-   cd e:/FQH/work/demos/scripts/email-mcp-server && node -e "
+   PROJECT_DIR=$(pwd) && cd "$PROJECT_DIR/scripts/email-mcp-server" && node -e "
    const nodemailer=require('nodemailer');const config=require('./config.json');
    (async()=>{
    const t=nodemailer.createTransport({host:config.smtp.host,port:config.smtp.port,secure:config.smtp.secure,auth:{user:config.smtp.auth.user,pass:config.smtp.auth.pass}});
@@ -142,4 +157,7 @@ Return a concise JSON summary. Do NOT include full email bodies:
 - If autoApproveDrafts is OFF, do NOT send auto-replies — just record and classify.
 - If autoApproveDrafts is ON AND intent=interested → generate and send auto-reply
   using KB docs + templates. Skip approval (this is auto-check mode).
+- Post-handoff replies (HANDED_OVER state) are RECORD-ONLY: log to email_log +
+  timeline with event_type='reply_recorded', skip intent classification, skip
+  auto-reply, do not change workflow state.
 - If the IMAP connection fails, return {error: "message"} and exit cleanly.
