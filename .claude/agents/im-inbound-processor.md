@@ -172,6 +172,13 @@ mcp__sqlite__write_query:
 
 ### A12. Send draft to Feishu for approval
 
+First, check how many other pending approvals exist:
+```sql
+mcp__sqlite__read_query:
+  "SELECT COUNT(*) as cnt FROM pending_approvals WHERE status = 'pending'"
+```
+
+If 0 other pending → simple prompt:
 ```bash
 cc-connect send --project crm -m "--- 邮件草稿 ---
 收件人: {name} <{email}>
@@ -181,6 +188,19 @@ cc-connect send --project crm -m "--- 邮件草稿 ---
 
 ---
 回复「批准」发送，回复「拒绝」取消
+（30 分钟内有效）"
+```
+
+If 1+ other pending → include the position hint:
+```bash
+cc-connect send --project crm -m "--- 邮件草稿 ---
+收件人: {name} <{email}>
+主题: {subject}
+
+{body}
+
+---
+你有多个待审批草稿。回复「批准{name}」或「{name}的批准」来批准此草稿，回复「列表」查看全部。
 （30 分钟内有效）"
 ```
 
@@ -196,34 +216,81 @@ mcp__sqlite__write_query:
 
 ## Branch B: Approval Reply
 
-### B1. Find pending approval
+### B1. Find ALL pending approvals
+
+Query ALL pending approvals (not just the latest):
 
 ```sql
 mcp__sqlite__read_query:
   "SELECT pa.id, pa.contact_id, pa.email_log_id, pa.platform, pa.status,
-          pa.draft_subject, pa.draft_body, pa.expires_at,
+          pa.draft_subject, pa.draft_body, pa.expires_at, pa.created_at,
           c.email, c.name, c.company
    FROM pending_approvals pa
    JOIN contacts c ON pa.contact_id = c.id
    WHERE pa.status = 'pending'
-   ORDER BY pa.created_at DESC
-   LIMIT 1"
+   ORDER BY pa.created_at DESC"
 ```
 
-**If no pending approvals:**
-→ Send `cc-connect send --project crm -m "没有待审批的邮件草稿。发送名片图片以创建新的外展邮件。"` and STOP.
+### B1.5 Handle expired approvals
 
-**If the pending approval has expired (expires_at < now):**
-→ Update status to 'expired':
+For each pending approval where `expires_at < datetime('now')`:
 ```sql
 mcp__sqlite__write_query:
   "UPDATE pending_approvals SET status = 'expired' WHERE id = ?"
 ```
-→ Send `cc-connect send --project crm -m "⏰ 此草稿已过期（超过 30 分钟）。请重新发送名片图片。"` and STOP.
+Remove expired ones from the active list before proceeding.
 
-### B2. Process the reply
+**If NO pending approvals remain after expiry cleanup:**
+→ Send `cc-connect send --project crm -m "没有待审批的邮件草稿。发送名片图片以创建新的外展邮件。"` and STOP.
 
-**If the message contains 「批准」or "approve" or "yes" (case insensitive):**
+### B2. Determine which draft to process
+
+Parse the user's message to determine which draft(s) they're responding to:
+
+| User Message | Action |
+|-------------|--------|
+| 「批准」(only 1 pending) | Process the single pending draft |
+| 「拒绝」(only 1 pending) | Reject the single pending draft |
+| 「批准{N}」or「批准 N」(e.g. 批准2) | Process pending draft at index N (1-based) |
+| 「拒绝{N}」or「拒绝 N」 | Reject pending draft at index N |
+| 「批准 {name}」or「{name}的批准」 | Match by contact name (case-insensitive, partial match) |
+| 「全部批准」 | Approve ALL pending drafts |
+| 「列表」or「查看」 | Show the list of pending drafts (see B2.5) |
+| Other text / only 1 pending | If only 1 pending: treat as approval. If multiple: show the list (see B2.5) |
+
+### B2.5 Show pending list (when multiple pending)
+
+If there are **2+ pending** drafts and the user didn't specify which one by number or name:
+
+```
+cc-connect send --project crm -m "📋 你有 {N} 个待审批草稿：
+
+1. {name1}（{company1}）— {subject1}
+2. {name2}（{company2}）— {subject2}
+3. {name3}（{company3}）— {subject3}
+
+回复「批准1」批准第 1 个，「拒绝2」拒绝第 2 个，或「全部批准」一键批准所有。"
+```
+
+If the user's message doesn't match any pattern above and there are multiple pending, show this list.
+
+### B3. Process the chosen draft
+
+**If 「全部批准」:**
+
+For EACH pending draft (in order, oldest first):
+1. Send email via `mcp__email__send_email`
+2. Update email_log status to 'sent'
+3. Update workflow_state to EMAIL_SENT
+4. Update pending_approvals status to 'approved'
+5. Log timeline
+
+After all processed:
+```bash
+cc-connect send --project crm -m "✅ 已批准并发送全部 {N} 封邮件：{name1}, {name2}, ..."
+```
+
+**If 「批准」（single draft or by index/name）:**
 
 1. Send the email from the draft:
 ```sql
