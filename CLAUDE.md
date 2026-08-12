@@ -144,6 +144,10 @@ When a user sends a business card image via Feishu/WeCom:
 4. When user replies with approval/rejection text, check `pending_approvals` and act
 5. Supports multi-draft: 「批准1」「拒绝2」「批准{name}」「全部批准」
 6. If `autoApproveDrafts` is ON, **still require IM approval** — OCR accuracy is lower than manual input
+7. **Output control**: cc-connect auto-delivers ALL output to IM users. The IM agent
+   MUST NOT expose thinking process, tool calls, file paths, or parameters. Use only
+   `cc-connect send -m "..."` for user-facing messages, followed by `NO_REPLY`.
+   Keep messages to 2-4 lines max (except draft emails needing full content).
 
 ### Bounce / OOO Detection
 

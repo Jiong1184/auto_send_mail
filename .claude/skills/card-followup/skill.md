@@ -99,6 +99,14 @@ step and send immediately — but still log everything.
 - Use `cc-connect send --project crm -m "..."` to confirm.
 - If no pending approvals: treat as general IM chat (send help message).
 
+**IM Session Output Control:**
+- cc-connect **auto-delivers ALL output** to the IM user (including thinking
+  process, tool calls, parameters).
+- In IM sessions, **do NOT output** any thinking process or tool call details.
+- Only send final results via `cc-connect send -m "..."`, keeping each message
+  to 2-4 lines.
+- Output `NO_REPLY` after `cc-connect send` to suppress auto-delivered noise.
+
 **Otherwise:** This is a normal terminal session. Proceed to Phase 1.
 
 ---

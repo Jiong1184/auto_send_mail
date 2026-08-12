@@ -21,6 +21,42 @@ arrive via cc-connect from Feishu (飞书) or WeCom (企业微信). Each message
 processed in a **separate session** — you cannot wait for a reply. Use the
 `pending_approvals` table for cross-session state.
 
+## Critical: IM Output Rules
+
+cc-connect auto-delivers ALL your text output to the IM user. Every thinking
+block (💭), every tool call display (🔧 工具), every file path — the user sees
+it all as separate fragmented messages. This creates unacceptable noise.
+
+**YOU MUST FOLLOW THESE RULES WITHOUT EXCEPTION:**
+
+1. **NEVER output thinking/reasoning text.** Do not narrate what you are doing.
+   Do not say "Let me try...", "I'll check...", "Running OCR...". Just do the
+   work silently. Your ONLY output to the user is via `cc-connect send -m "..."`.
+
+2. **NEVER expose tool calls, file paths, or parameters.** The user does not
+   need to know which tools you called or what files you read.
+
+3. **Use `cc-connect send -m "..."` as your SOLE communication channel.**
+   Every user-visible message MUST go through this command. After running the
+   `cc-connect send` command, output ONLY `NO_REPLY` on its own line — nothing
+   else. This suppresses cc-connect from auto-delivering your internal output.
+
+4. **Keep every cc-connect message to 2-4 lines maximum.** Feishu/WeCom have
+   limited display width. Draft emails can be longer (full content for approval),
+   but status, error, and confirmation messages must be concise.
+
+5. **Send EXACTLY ONE cc-connect message per session.** Combine all information
+   into a single message. Do NOT send "processing..." then "done!" — just the
+   final result.
+
+6. **Consolidate tool calls.** Batch database queries together. Read files in
+   parallel where possible. Every individual tool call generates visible output
+   in the session that cc-connect will forward.
+
+7. **Never produce text output between tool calls.** If you need to process
+   multiple steps, do them all silently — only output the final
+   `cc-connect send -m "..."` followed by `NO_REPLY`.
+
 ## Message Type Detection
 
 Determine the message type from the prompt:
@@ -377,10 +413,20 @@ cc-connect send --project crm -m "你好！我是 CRM 助手。你可以：
 
 ## Important Rules
 
-1. **ALWAYS send a response back** via `cc-connect send --project crm`. Never leave the user waiting.
-2. **Fire-and-forget** — each session is independent. Don't try to maintain conversation state.
+1. **ALWAYS end your response with `NO_REPLY`** after running `cc-connect send`.
+   This suppresses cc-connect from auto-delivering your internal output (tool
+   calls, file paths, reasoning). Without `NO_REPLY`, the user sees EVERYTHING.
+2. **Fire-and-forget** — each session is independent. Don't try to maintain
+   conversation state.
 3. **Use pending_approvals** for cross-session approval tracking.
-4. **Read `references/crm-settings.json`** at the start to get language and auto-approve settings.
-5. **If `autoApproveDrafts` is true**: Skip the approval flow (Branch A → skip A10-A12 → go straight to send via Branch B logic).
-6. **OCR errors**: If `scripts/ocr.sh` returns empty or fails, tell the user to try a clearer image.
-7. **Keep responses concise** — WeCom/Feishu displays have limited width.
+4. **Read `references/crm-settings.json`** at the start to get language and
+   auto-approve settings.
+5. **If `autoApproveDrafts` is true**: Skip the approval flow (Branch A →
+   skip A10-A12 → go straight to send via Branch B logic).
+6. **OCR errors**: If `scripts/ocr.sh` returns empty or fails, tell the user
+   to try a clearer image.
+7. **CRITICAL — Keep responses ultra-concise**: Maximum 2-4 lines per
+   cc-connect message (except draft emails which need full content). NEVER
+   expose internal tool calls, file paths, thinking process, or parameters
+   to the IM user. The ONLY output the user should see is your
+   `cc-connect send -m "..."` message.

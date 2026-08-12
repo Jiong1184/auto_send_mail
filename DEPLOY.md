@@ -110,7 +110,7 @@ cd scripts/email-mcp-server && npm install && cd ../..
 
 ```bash
 mkdir -p data
-mkdir -p ~/.cc-connect/agent-prompts
+  mkdir -p ~/.cc-connect/agent-prompts
 ```
 
 ### 3.4 初始化数据库
@@ -133,7 +133,7 @@ sqlite3 data/crm.db < scripts/setup-db.js 2>/dev/null || \
 ```bash
 # 修改第 15 行和第 40 行
 PROJECT_DIR="/opt/auto_send_mail"          # ← 你的部署路径
-export HOME=/home/deploy                    # ← 部署用户的家目录
+export HOME=/root                           # ← 部署用户的家目录
 ```
 
 **`scripts/ocr.sh`：**
@@ -259,12 +259,13 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=deploy
+User=root
 WorkingDirectory=/opt/auto_send_mail
-ExecStart=/usr/bin/cc-connect serve --config /home/deploy/.cc-connect/config.toml
+ExecStart=/root/.nvm/versions/node/v24.19.0/bin/node /root/.nvm/versions/node/v24.19.0/bin/cc-connect serve --config /root/.cc-connect/config.toml
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
+Environment=PATH=/root/.nvm/versions/node/v24.19.0/bin:/usr/local/bin:/usr/bin:/bin
 
 # 安全加固
 NoNewPrivileges=yes
@@ -272,7 +273,7 @@ PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=/opt/auto_send_mail/data
-ReadWritePaths=/home/deploy/.cc-connect
+ReadWritePaths=/root/.cc-connect
 ReadWritePaths=/tmp
 
 [Install]
@@ -283,9 +284,9 @@ WantedBy=multi-user.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable cc-connect
-sudo systemctl start cc-connect
-sudo systemctl status cc-connect
+  sudo systemctl enable cc-connect
+  sudo systemctl start cc-connect
+  sudo systemctl status cc-connect
 ```
 
 ---
@@ -309,7 +310,7 @@ LOG_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
 
 ```bash
 PROJECT_DIR="/opt/auto_send_mail"          # ← 修改为部署路径
-export HOME=/home/deploy                    # ← 修改为部署用户家目录
+export HOME=/root                           # ← 修改为部署用户家目录
 # ...
 LOG_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)  # ← Linux stat 格式
 ```
@@ -565,3 +566,8 @@ find data/ -name "crm.db.*.bak" -mtime +30 -delete
 - 定期轮换 MinerU API Token
 - 监控 `auto-check.log` 大小，确保日志轮转正常
 - 飞书 App Secret 定期检查是否过期
+
+#飞书
+app_id = "cli_aaf0350294a1dbd4"
+app_secret = "<your-feishu-app-secret>"
+allow_from = ["<your-open-id>"]
