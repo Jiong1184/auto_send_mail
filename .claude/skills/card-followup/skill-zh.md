@@ -24,6 +24,20 @@ allowed-tools:
   - Bash(cc-connect send:*)
 ---
 
+## ⚠️ IM 会话全局规则（cc-connect）
+
+**如果你正在通过 cc-connect 运行（飞书/企微），以下规则覆盖本 skill 的所有阶段：**
+
+1. **禁止输出任何思考过程、工具调用详情、文件路径或参数** — cc-connect 会将其全部转发给用户
+2. **唯一通信渠道** — 所有用户可见消息必须通过 `cc-connect send --project crm -m "..."` 发送
+3. **每条消息控制在 2-4 行**（草稿邮件除外，可展示完整内容供审批）
+4. **每次 `cc-connect send` 之后输出 `NO_REPLY`** — 抑制自动投递的冗余内容
+5. **只发一条最终结果消息** — 不要发"处理中..."之类的中间状态
+6. **合并工具调用** — 批量查询、并行读取，减少工具调用次数
+7. **不要使用 AskUserQuestion** — IM 会话是无头的，无法交互
+
+---
+
 ## IM 推送通知（cc-connect）
 
 当 `references/crm-settings.json` 中 `im.enabled` 为 `true` 时，通过 cc-connect 将关键事件推送到企业微信。在进入每个阶段前，从 `references/crm-settings.json` 读取完整的 `im` 配置，以确定哪些通知已启用。
@@ -88,7 +102,14 @@ cc-connect send --project crm -m "消息文本"
 - 只通过 `cc-connect send -m "..."` 发送最终结果，每条控制在 2-4 行以内。
 - 在 `cc-connect send` 之后输出 `NO_REPLY` 以抑制自动投递的冗余内容。
 
-**否则：** 这是正常的终端会话。进入阶段 1。
+**如果是 IM 会话中的其他文本消息**（如「给xxx发邮件」「查看xxx状态」）：
+- **不要进入阶段 1 菜单** — IM 会话无法使用交互式菜单。
+- 直接理解用户的自然语言意图并执行对应的操作（发邮件 → 阶段 2-3，查状态 → 查看联系人，等等）。
+- 所有结果通过 `cc-connect send --project crm -m "..."` 返回，控制在 2-4 行。
+- 在 `cc-connect send` 之后输出 `NO_REPLY`。
+- **全程禁止输出思考过程、工具调用、参数。**
+
+**否则（非 IM 会话）：** 这是正常的终端会话。进入阶段 1。
 
 ---
 

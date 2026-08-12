@@ -29,6 +29,20 @@ allowed-tools:
   - Bash(cc-connect send:*)
 ---
 
+## ⚠️ IM Session Global Rules (cc-connect)
+
+**If you are running via cc-connect (Feishu/WeCom), these rules override ALL phases of this skill:**
+
+1. **NEVER output thinking, tool call details, file paths, or parameters** — cc-connect forwards EVERYTHING to the IM user
+2. **Sole communication channel** — all user-visible messages MUST go through `cc-connect send --project crm -m "..."`
+3. **Keep each message to 2-4 lines** (except draft emails which need full content for approval)
+4. **Output `NO_REPLY` after every `cc-connect send`** — suppresses auto-delivered verbose output
+5. **Send exactly ONE final result message** — no "processing..." or intermediate status messages
+6. **Consolidate tool calls** — batch queries, read files in parallel, minimize tool call count
+7. **Do NOT use AskUserQuestion** — IM sessions are headless and cannot interact
+
+---
+
 ## IM Push Notifications (cc-connect)
 
 When `im.enabled` is `true` in `references/crm-settings.json`, push critical events to WeCom (企业微信) via cc-connect. Read the entire `im` section from `references/crm-settings.json` at the start of each Phase to determine which notifications are enabled.
@@ -107,7 +121,14 @@ step and send immediately — but still log everything.
   to 2-4 lines.
 - Output `NO_REPLY` after `cc-connect send` to suppress auto-delivered noise.
 
-**Otherwise:** This is a normal terminal session. Proceed to Phase 1.
+**If this is an IM session with other text** (e.g. "send email to xxx", "check xxx status"):
+- **Do NOT enter Phase 1 menu** — IM sessions cannot use interactive menus.
+- Directly understand the user's natural language intent and execute the corresponding operation (send email → Phase 2-3, check status → View Contact, etc.).
+- Return ALL results via `cc-connect send --project crm -m "..."`, kept to 2-4 lines.
+- Output `NO_REPLY` after `cc-connect send`.
+- **NEVER output thinking process, tool calls, or parameters.**
+
+**Otherwise (non-IM session):** This is a normal terminal session. Proceed to Phase 1.
 
 ---
 
