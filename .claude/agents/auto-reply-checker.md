@@ -116,6 +116,30 @@ c) **Compose auto-reply**: Write a professional reply in the configured language
    - Uses KB info to provide relevant details
    - Includes quoted original email ("> " prefix) at the bottom for context
    - Guides toward human follow-up for shipping/delivery
+   - **Pricing disclosure policy**: You may send the product catalog/brochure
+     (优旦防护箱产品手册 PDF) if the customer asks for product materials. Do NOT
+     send the full price list (压塑箱价格.xls / full price table) and do NOT dump
+     full prices into the reply. Only quote a single product's price when the
+     customer explicitly asks about that specific model; otherwise invite them
+     to name the model they need.
+   - **Quote conversion (when the customer explicitly asks for USD pricing)**:
+     USD unit price = RMB ex-factory price ÷ 6.2; FOB USD price = (freight cost
+     ÷ 6.2) ÷ order quantity + RMB ex-factory price ÷ 6.2. Freight cost is in
+     RMB (2500/3500) — convert ÷6.2 to USD first. Freight tier by total order
+     volume (per-unit volume = outer 长×宽×高 in m × qty): ≤28 m³ → 2500;
+     28–68 m³ → 3500.
+   - **RMB quote (when the customer asks for RMB pricing)**: first ask the
+     customer for their shipping destination (发货地址), then compute the
+     logistics cost from the logistics company price list (to be provided by
+     the user); RMB total = product ex-factory price + logistics cost.
+   - **Sign with the standard signature (verbatim):**
+     ```
+     Best regards,
+     YOUDAN TRADING CO.,LIMITED
+     sales6@zonade.cn
+     www.zonade.cn
+     ```
+     Do NOT sign as "ZONADE Sales Team".
 
 d) **Send via SMTP**: Use nodemailer from `scripts/email-mcp-server/` to send:
    ```bash

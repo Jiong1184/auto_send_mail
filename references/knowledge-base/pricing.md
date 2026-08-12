@@ -1,5 +1,29 @@
 # Pricing — 佐奈丹 (ZONADE)
 
+> ⚠️ **INTERNAL USE ONLY — DO NOT send this full price list to customers.**
+> - Customer emails may include the **product catalog/brochure** (优旦防护箱产品手册 PDF), but **NOT** this full price table (and NOT the `压塑箱价格.xls` file).
+> - Do NOT list the full price table in email bodies or auto-replies.
+> - Only share a **single product's price** when the customer explicitly asks about that specific model (e.g. "How much is X-483621?"). Always ask which model they need before quoting.
+
+## 报价换算规则 (Quote Conversion Rules)
+
+When quoting to customers in USD (user-given rules):
+
+- **美金价 (USD unit price) = 人民币出厂价 ÷ 6.2**
+- **FOB 美金价 (FOB USD price) = (货代费用 ÷ 6.2) ÷ 订购数量 + 人民币出厂价 ÷ 6.2**
+
+**货代费用 (freight cost) tier** — 单位为**人民币**，需先 ÷6.2 换算成美金再分摊；based on total order volume:
+1. Per-unit volume = **outer dimensions** 长×宽×高 (mm → m); total m³ = Σ(per-unit volume × quantity across all models).
+2. Total ≤ 28 m³ → 20ft container (28 m³), freight = **¥2500** (÷6.2 → USD).
+3. 28 m³ < total ≤ 68 m³ → 40ft high-cube (68 m³), freight = **¥3500** (÷6.2 → USD).
+
+**人民币报价 (RMB quote)** — when the customer asks for RMB pricing:
+1. First ask the customer for their **shipping destination / delivery address** (发货地址).
+2. Calculate the logistics cost for that destination using the **logistics company price list** (物流公司报价清单 — to be provided by the user).
+3. **人民币总价 (RMB total) = 产品出厂价 + 物流费.**
+
+Apply only when the customer explicitly asks for USD / FOB USD / RMB pricing.
+
 ## Product Pricing Table
 
 All prices in **RMB (¥)** per unit. Case weight is product net weight.

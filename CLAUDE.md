@@ -103,6 +103,48 @@ System notifications (Alibaba Cloud, Tencent/QQ, bounce/undelivered, 欠费/额�
 - **All operations logged**: Every state change and email is recorded in `timeline` table
 - **Plaintext KB**: Knowledge base is Markdown files (not a vector DB) — sufficient for <10 docs
 
+## Pricing Disclosure Policy (价格披露政策)
+
+- **可以发送给客户:** 产品目录册 `优旦防护箱产品手册(手机版).pdf`。
+- **禁止发送给客户:** 全量价格表 `压塑箱价格.xls` 或完整价格表。价格表仅供内部参考。
+- **按需报价:** 仅当客户明确询问某一款具体产品型号时，才回复该款产品的单独价格。
+- 邮件正文/自动回复中不要罗列全系列价格，应引导客户告知所需具体型号。
+- Source of truth: `references/knowledge-base/pricing.md`（顶部含内部使用警告）与 `references/knowledge-base/product-intro.md` → "Pricing Disclosure Policy"。
+
+### Pricing Calculation (报价换算规则)
+
+When a customer requests a quote, use these conversion rules (given by the user, confirmed 2026-08-12):
+
+- **美金价 (USD unit price) = 人民币出厂价 (RMB ex-factory price) ÷ 6.2**
+- **FOB 美金价 (FOB USD price) = (货代费用 ÷ 6.2) ÷ 订购数量 (order quantity) + 人民币出厂价 ÷ 6.2**
+
+**Freight cost tier** — based on total order volume (freight costs are in **RMB**; ÷ 6.2 to convert to USD before apportioning):
+1. Compute each model's per-unit volume from its **outer dimensions** 长×宽×高 (mm → m), then × quantity; sum all models for the total m³.
+2. Total ≤ 28 m³ → 20ft container (28 m³), freight cost = **¥2500** (÷6.2 → USD).
+3. 28 m³ < total ≤ 68 m³ → 40ft high-cube container (68 m³), freight cost = **¥3500** (÷6.2 → USD).
+
+**人民币报价 (RMB quote)** — when the customer asks for RMB pricing:
+1. First ask the customer for their **shipping destination / delivery address** (发货地址).
+2. Calculate the logistics cost for that destination using the **logistics company price list** (物流公司报价清单 — to be provided by the user).
+3. **人民币总价 (RMB total) = 产品出厂价 (product ex-factory price) + 物流费 (logistics cost).**
+
+Apply these ONLY when the customer explicitly asks for USD / FOB USD / RMB pricing.
+
+## Email Signature (标准落款)
+
+Every outbound email and auto-reply MUST be signed with the following block verbatim:
+
+```
+Best regards,
+YOUDAN TRADING CO.,LIMITED
+sales6@zonade.cn
+www.zonade.cn
+```
+
+- The company line is **YOUDAN TRADING CO.,LIMITED** — do NOT sign as "ZONADE Sales Team".
+- An individual sales rep's name may be added above the company line only when a specific rep is assigned.
+- Source of truth: `references/knowledge-base/product-intro.md` → "Standard Email Signature" and the templates in `references/templates/`.
+
 ## IM Integration (cc-connect)
 
 This project uses [cc-connect](https://github.com/chenhg5/cc-connect) to bridge Feishu (飞书) and WeCom (企业微信). The daemon runs as a separate process (`cc-connect serve`) and connects via WebSocket — **no public IP required**.

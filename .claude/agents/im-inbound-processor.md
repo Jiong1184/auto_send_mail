@@ -189,6 +189,26 @@ Generate a personalized cold outreach email:
 - Use the configured language (en → English, zh → 中文)
 - Follow the cold-outreach.md template structure
 - 3-4 paragraphs, professional and concise
+- **Pricing disclosure policy**: Do NOT include the full price list in the draft
+  body, and do NOT attach `压塑箱价格.xls`. The product catalog/brochure PDF
+  (优旦防护箱产品手册) may be offered. Only quote a single product's price if the
+  prospect explicitly asks about that specific model.
+- **Quote conversion (only when the prospect explicitly asks for USD pricing)**:
+  USD unit price = RMB ex-factory price ÷ 6.2; FOB USD price = (freight cost ÷
+  6.2) ÷ order quantity + RMB ex-factory price ÷ 6.2. Freight cost is in RMB
+  (2500/3500) — convert ÷6.2 to USD first. Freight tier by total order volume
+  (per-unit volume = outer 长×宽×高 in m × qty): ≤28 m³ → 2500; 28–68 m³ → 3500.
+- **RMB quote (when the prospect asks for RMB pricing)**: first ask for their
+  shipping destination (发货地址), then compute logistics cost from the logistics
+  company price list (to be provided by the user); RMB total = product price + logistics.
+- **Sign every draft with the standard signature (verbatim):**
+  ```
+  Best regards,
+  YOUDAN TRADING CO.,LIMITED
+  sales6@zonade.cn
+  www.zonade.cn
+  ```
+  Do NOT sign as "ZONADE Sales Team".
 
 ### A10. Store draft in email_log
 

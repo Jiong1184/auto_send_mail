@@ -24,10 +24,29 @@ or market presence that builds trust.]
 or "would you be open to learning more?"]
 
 Best regards,
-[Your Name]
-[Your Company]
-[Website / Contact Info]
+YOUDAN TRADING CO.,LIMITED
+sales6@zonade.cn
+www.zonade.cn
 ```
+
+> **Standard Email Signature (use verbatim in every outbound email):**
+> `Best regards,` / `YOUDAN TRADING CO.,LIMITED` / `sales6@zonade.cn` / `www.zonade.cn`
+> Do NOT sign as "ZONADE Sales Team". A specific sales rep's name may be added
+> above the company line if applicable, but the company line must read
+> `YOUDAN TRADING CO.,LIMITED`.
+
+> **Pricing Disclosure Policy:**
+> - The product catalog/brochure (优旦防护箱产品手册 PDF) may be sent to customers.
+> - Do NOT send the full price list (压塑箱价格.xls or the full price table) to customers,
+>   and do NOT list full prices in the email body.
+> - Only share a single product's price when the customer explicitly asks about that model.
+> - **Quote conversion (when customer asks for USD):** 美金价 = 人民币出厂价 ÷ 6.2;
+>   FOB 美金价 = (货代费用 ÷ 6.2) ÷ 订购数量 + 人民币出厂价 ÷ 6.2. Freight tier by
+>   total volume (use outer 长×宽×高 mm→m × qty): ≤28 m³ → ¥2500; 28–68 m³ → ¥3500
+>   (freight is RMB; ÷6.2 → USD before adding).
+>   **RMB quote:** ask the customer for their shipping destination (发货地址) first,
+>   then compute logistics cost from the logistics company price list (to be provided);
+>   RMB total = product price + logistics.
 
 ## Key Principles
 

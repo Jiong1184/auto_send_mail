@@ -119,3 +119,43 @@ Packaging artwork follows EU recycling and material marking standards. Revision 
 - **Cologne Fair (科隆展)** — Hardware/Tools industry
 - **TiTE x IHT (Taiwan International Tools & Hardware Expo)** — Taiwan's largest hardware expo
 
+## Pricing Disclosure Policy (价格披露政策)
+
+- **May send to customers:** the product catalog/brochure (`优旦防护箱产品手册(手机版).pdf`) — this is the "产品目录册".
+- **Do NOT send to customers:** the full price list (`压塑箱价格.xls` or the complete price table). Keep the full price list internal.
+- **Per-product price:** only when a customer explicitly asks about a specific model may you share that single product's price.
+- Do not list full prices in email bodies or auto-replies; invite them to ask about the specific model they need.
+
+### 报价换算规则 (Quote Conversion Rules)
+
+When the customer explicitly requests USD / FOB USD pricing, convert the RMB ex-factory price as follows:
+
+- **美金价 (USD unit price) = 人民币出厂价 ÷ 6.2**
+- **FOB 美金价 (FOB USD price) = (货代费用 ÷ 6.2) ÷ 订购数量 + 人民币出厂价 ÷ 6.2**
+
+**货代费用 (freight cost) tier** — 单位为**人民币**，需先 ÷6.2 换算成美金再分摊；based on total order volume:
+1. Per-unit volume = **outer dimensions** 长×宽×高 (mm → m); total m³ = Σ(per-unit volume × quantity across all models).
+2. Total ≤ 28 m³ → 20ft container (28 m³), freight = **¥2500** (÷6.2 → USD).
+3. 28 m³ < total ≤ 68 m³ → 40ft high-cube (68 m³), freight = **¥3500** (÷6.2 → USD).
+
+**人民币报价 (RMB quote)** — when the customer asks for RMB pricing:
+1. First ask the customer for their **shipping destination / delivery address** (发货地址).
+2. Calculate the logistics cost for that destination using the **logistics company price list** (物流公司报价清单 — to be provided by the user).
+3. **人民币总价 (RMB total) = 产品出厂价 + 物流费.**
+
+## Standard Email Signature
+
+Use the following signature verbatim at the end of every outbound email and auto-reply:
+
+```
+Best regards,
+YOUDAN TRADING CO.,LIMITED
+sales6@zonade.cn
+www.zonade.cn
+```
+
+> **IMPORTANT:** The company line in the email signature must read **YOUDAN TRADING
+> CO.,LIMITED** — do NOT use "ZONADE Sales Team". An individual sales rep's name
+> may be added above the company line when a specific rep is assigned, but the
+> company line stays YOUDAN TRADING CO.,LIMITED.
+
