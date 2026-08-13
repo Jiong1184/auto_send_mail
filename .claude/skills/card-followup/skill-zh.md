@@ -563,6 +563,9 @@ Agent 工具:
             * 在 email_log 中记录外发邮件（status = 'handed_over'）
             * 将 workflow_state 更新为 HANDED_OVER
             * 记录时间线："自动回复已发送。"
+            * 发送交接通知邮件：随机从 teamMembers 选一名成员，发送固定模板
+              "[CRM 交接] {name} @ {company}" 通知邮件（含联系人/意图/对话摘要），
+              并记录 timeline event_type='handoff_notified'。
           - 如果发送失败：
             * 记录时间线："自动回复发送失败——将重试"
             * 将状态保持为 INTERESTED（不要推进到 HANDED_OVER）
@@ -591,6 +594,8 @@ Agent 工具:
        并尝试发送。
        如果成功：记录外发邮件（in_reply_to = 原始入站 message_id），
        将状态更新为 HANDED_OVER，重置 retry_count = 0。
+       同时发送交接通知邮件给随机一名 teamMembers 成员（含联系人/意图/对话摘要），
+       记录 timeline event_type='handoff_notified'。
        如果失败：递增 retry_count，记录时间线。
     4. 将 lastCheckedAt 更新为当前 ISO 时间戳。
        注意：这必须在所有邮件处理完成后（步骤 3）进行，
@@ -1112,6 +1117,30 @@ mcp__sqlite__write_query:
 
 - 如果 `im.enabled` 且 `im.notifications.autoReplySent`：
   运行 `cc-connect send --project crm -m "✉️ 自动回复已发送至 {name}（{email}）\n状态：HANDED_OVER\n⚠️ 需要人工跟进物流/交付事宜"`（即发即忘）。
+
+**发送交接通知邮件给团队成员（自动移交，无开关，始终发送）：**
+
+自动回复发送成功后，随机从 `references/crm-settings.json` → `teamMembers` 选一名成员，发送固定模板的交接通知邮件：
+
+1. 读取 `teamMembers` 数组，随机选一名（仅一名时选该名）。
+2. 生成对话摘要（复用「交接给团队成员」H2 摘要格式：时间线关键点 + 邮件交流要点 + 意图 + 待解决问题 + 建议下一步）。
+3. 发送通知邮件：
+```
+mcp__email__send_email:
+  to: {team member email}
+  subject: "[CRM 交接] {name} @ {company} — 自动回复已发送，需人工跟进"
+  body: "联系人: {name} ({email})
+公司: {company}
+意图: 感兴趣
+状态: HANDED_OVER（自动回复已发送）
+
+对话摘要:
+{summary}
+
+建议下一步: 跟进物流/交付等具体事宜。
+——此邮件由 CRM 自动生成"
+```
+4. 记录时间线：`event_type='handoff_notified'`，描述 "已发送交接通知邮件给 {team member name} ({email})"。
 
 **如果发送失败：**
 ```
