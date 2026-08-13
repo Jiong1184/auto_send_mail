@@ -218,9 +218,9 @@ async function checkReplies(args) {
 
       messages.push({
         from: envelope.from?.[0]
-          ? `${envelope.from[0].name || ""} <${envelope.from[0].addr || ""}>`.trim()
+          ? `${envelope.from[0].name || ""} <${envelope.from[0].address || ""}>`.trim()
           : "unknown",
-        to: envelope.to?.[0]?.addr || "unknown",
+        to: envelope.to?.[0]?.address || "unknown",
         subject: envelope.subject || "",
         date: msgDate ? msgDate.toISOString() : null,
         messageId: envelope.messageId || headersObj["message-id"] || null,
