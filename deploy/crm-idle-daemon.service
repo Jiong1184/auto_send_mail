@@ -1,0 +1,31 @@
+# CRM IMAP IDLE auto-reply daemon — systemd unit template.
+#
+# Placeholders are substituted by scripts/install-idle-daemon.sh:
+#   @PROJECT_DIR@  → project root (WorkingDirectory + script path)
+#   @NODE_BIN@     → absolute path to node (from `command -v node`)
+#   @RUN_USER@     → user the service runs as (the user who owns the Claude Code CLI + IMAP creds)
+#   @RUN_USER_HOME@→ that user's home dir (for claude's npm-global bin lookup)
+#
+# Manual install if you don't want to use the helper:
+#   sudo cp deploy/crm-idle-daemon.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now crm-idle-daemon
+
+[Unit]
+Description=CRM IMAP IDLE auto-reply daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@RUN_USER@
+WorkingDirectory=@PROJECT_DIR@
+ExecStart=@NODE_BIN@ @PROJECT_DIR@/scripts/email-mcp-server/idle-daemon.js
+Restart=always
+RestartSec=5
+# auto-check.sh prepends $HOME/.npm-global/bin to PATH so `claude` is found.
+Environment=HOME=@RUN_USER_HOME@
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

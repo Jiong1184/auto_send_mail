@@ -162,19 +162,19 @@ The last three options should be toggles:
 
 When the user selects a toggle:
 1. Read `references/crm-settings.json`
-2. Flip the corresponding value. For auto-polling, flip `autoReplyPolling.enabled`.
-3. If ENABLING auto-polling:
+2. Flip the corresponding value. For auto-polling, flip both `autoReplyPolling.enabled` and `idleDaemon.enabled`.
+3. If ENABLING auto-polling (IDLE event-driven daemon):
    a. Ensure `scripts/auto-check.sh` exists and is executable (`chmod +x`).
-   b. Calculate the crontab entry:
-      `"*/{intervalMinutes} * * * * cd {PROJECT_DIR} && bash scripts/auto-check.sh"`
-   c. Install via: `(crontab -l 2>/dev/null; echo "{crontabEntry}") | crontab -`
-   d. Store the exact crontab entry string in `autoReplyPolling.crontabEntry`.
-   e. Display: "✅ Auto-polling enabled — will check every {N} minutes via system cron."
+   b. Ensure `deploy/crm-idle-daemon.service` and `scripts/install-idle-daemon.sh` exist.
+   c. Install & start the systemd service: `sudo bash scripts/install-idle-daemon.sh`
+      (copies the unit to /etc/systemd/system, enables on boot, and starts it now).
+   d. Set `idleDaemon.enabled: true` and `autoReplyPolling.trigger: "idle"`.
+   e. Display: "✅ Auto-polling enabled — IMAP IDLE daemon active (systemd `{idleDaemon.serviceName}`). New mail triggers an immediate check."
 4. If DISABLING auto-polling:
-   a. Read `autoReplyPolling.crontabEntry`.
-   b. Run: `crontab -l 2>/dev/null | grep -vF "{crontabEntry}" | crontab -`
-   c. Clear `crontabEntry` (set to `""`).
-   d. Display: "⏸ Auto-polling disabled — cron entry removed."
+   a. Stop & remove the service: `sudo bash scripts/install-idle-daemon.sh --remove`
+      (or `sudo systemctl disable --now {idleDaemon.serviceName}`).
+   b. Set `idleDaemon.enabled: false`.
+   c. Display: "⏸ Auto-polling disabled — IDLE daemon service stopped."
 5. If TOGGLING IM notifications:
    a. Flip `im.enabled` in `references/crm-settings.json`.
    b. If ENABLING IM:

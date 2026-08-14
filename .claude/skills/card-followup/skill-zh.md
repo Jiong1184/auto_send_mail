@@ -141,19 +141,19 @@ cc-connect send --project crm -m "消息文本"
 
 当用户选择一个开关时：
 1. 读取 `references/crm-settings.json`
-2. 翻转对应的值。对于自动轮询，翻转 `autoReplyPolling.enabled`。
-3. 如果启用自动轮询：
+2. 翻转对应的值。对于自动轮询，同时翻转 `autoReplyPolling.enabled` 和 `idleDaemon.enabled`。
+3. 如果启用自动轮询（IDLE 事件触发守护进程）：
    a. 确保 `scripts/auto-check.sh` 存在且可执行（`chmod +x`）。
-   b. 计算 crontab 条目：
-      `"*/{intervalMinutes} * * * * cd {PROJECT_DIR} && bash scripts/auto-check.sh"`
-   c. 通过以下命令安装：`(crontab -l 2>/dev/null; echo "{crontabEntry}") | crontab -`
-   d. 将精确的 crontab 条目字符串存储在 `autoReplyPolling.crontabEntry` 中。
-   e. 显示："✅ 自动轮询已启用 — 将通过系统 cron 每 {N} 分钟检查一次。"
+   b. 确保 `deploy/crm-idle-daemon.service` 和 `scripts/install-idle-daemon.sh` 存在。
+   c. 安装并启动 systemd 服务：`sudo bash scripts/install-idle-daemon.sh`
+      （把 unit 复制到 /etc/systemd/system、设置开机自启、立即启动）。
+   d. 设置 `idleDaemon.enabled: true` 和 `autoReplyPolling.trigger: "idle"`。
+   e. 显示："✅ 自动轮询已启用 — IMAP IDLE 守护进程运行中（systemd `{idleDaemon.serviceName}`）。新邮件到达即触发检查。"
 4. 如果禁用自动轮询：
-   a. 读取 `autoReplyPolling.crontabEntry`。
-   b. 运行：`crontab -l 2>/dev/null | grep -vF "{crontabEntry}" | crontab -`
-   c. 清空 `crontabEntry`（设为 `""`）。
-   d. 显示："⏸ 自动轮询已禁用 — cron 条目已移除。"
+   a. 停止并移除服务：`sudo bash scripts/install-idle-daemon.sh --remove`
+      （或 `sudo systemctl disable --now {idleDaemon.serviceName}`）。
+   b. 设置 `idleDaemon.enabled: false`。
+   c. 显示："⏸ 自动轮询已禁用 — IDLE 守护进程服务已停止。"
 5. 如果切换 IM 通知：
    a. 翻转 `references/crm-settings.json` 中的 `im.enabled`。
    b. 如果启用 IM：

@@ -291,53 +291,36 @@ sudo systemctl daemon-reload
 
 ---
 
-## 6. 自动检查 (Cron)
+## 6. 自动回复触发 (IMAP IDLE 守护进程)
 
-### 6.1 修复 auto-check.sh
+`scripts/email-mcp-server/idle-daemon.js` 是一个常驻 **IMAP IDLE 守护进程**，替代旧版的
+cron 定时轮询：与 QQ 邮箱保持长连接，新邮件到达时服务器主动推送（`exists` 事件），
+去抖 60s 后立即触发一次检查——无空跑、延迟接近实时。由 systemd 服务 `crm-idle-daemon`
+管理（崩溃自动重启、开机自启）。
 
-将 `scripts/auto-check.sh` 中的 macOS 特定部分改为 Linux 兼容：
+### 6.1 确认 auto-check.sh
 
-```bash
-# 第 28-36 行：将 stat -f%z 替换为 Linux 命令
-# macOS 版本：
-# LOG_SIZE=$(stat -f%z "$LOG_FILE" 2>/dev/null || echo 0)
-
-# Linux 版本：
-LOG_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
-```
-
-完整修改后的关键行：
-
-```bash
-PROJECT_DIR="/opt/auto_send_mail"          # ← 修改为部署路径
-export HOME=/root                           # ← 修改为部署用户家目录
-# ...
-LOG_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)  # ← Linux stat 格式
-```
-
-设置权限：
+`scripts/auto-check.sh` 仍是"执行一次检查"的动作（含 flock 互斥、日志轮转、调用
+`claude -p`），路径自动检测（`SCRIPT_DIR`/`PROJECT_DIR`），无需手工改行号。
 
 ```bash
 chmod +x scripts/auto-check.sh
 ```
 
-### 6.2 配置 Crontab
+### 6.2 安装 systemd 服务
 
 ```bash
-crontab -e
+sudo bash scripts/install-idle-daemon.sh
 ```
 
-添加：
-
-```cron
-# CRM 自动回复检查 — 每 5 分钟一次
-*/5 * * * * /opt/auto_send_mail/scripts/auto-check.sh
-```
+脚本会：解析 `node` 绝对路径 → 用实际路径渲染 `deploy/crm-idle-daemon.service` 到
+`/etc/systemd/system/` → `daemon-reload` → `enable --now`（开机自启 + 立即启动）。
 
 验证：
 
 ```bash
-crontab -l
+systemctl status crm-idle-daemon
+tail -f /opt/auto_send_mail/data/idle-daemon.log   # 应看到 "connected ... entering IDLE"
 ```
 
 ### 6.3 启用 CRM 自动轮询
@@ -345,11 +328,23 @@ crontab -l
 运行 Claude Code 并开启自动轮询：
 
 ```bash
-claude -p "/card-followup" 
+claude -p "/card-followup"
 # → 选择 "Toggle auto-polling" → Enable
 ```
 
-这会在 `references/crm-settings.json` 中设置 `autoReplyPolling.enabled: true`。
+这会安装/启动 systemd 服务，并在 `references/crm-settings.json` 设置
+`autoReplyPolling.enabled: true`、`autoReplyPolling.trigger: "idle"`、`idleDaemon.enabled: true`。
+
+### 6.4 管理命令
+
+```bash
+systemctl status crm-idle-daemon                        # 状态
+sudo systemctl restart crm-idle-daemon                  # 重启
+sudo bash scripts/install-idle-daemon.sh --remove       # 卸载（禁用服务）
+```
+
+> **旧版 cron 迁移**：若此前配过 crontab，请移除旧条目：
+> `crontab -e` 删除 `*/5 * * * * ...auto-check.sh` 那一行。
 
 ---
 
@@ -381,8 +376,9 @@ sqlite3 data/crm.db ".tables"
 ls -la scripts/email-mcp-server/config.json
 ls -la references/mineru/config.yaml
 
-# 7. 检查 Cron
-crontab -l | grep auto-check
+# 7. 检查 IDLE daemon
+systemctl status crm-idle-daemon
+tail -5 data/idle-daemon.log
 
 # 8. 检查 cc-connect 日志
 journalctl -u cc-connect -n 20 --no-pager
@@ -406,8 +402,10 @@ claude -p "send a test IM message: cc-connect send --project crm -m '🚀 CRM �
 # 5. 测试名片 OCR
 # 在飞书中 @CRM助手 发送一张名片图片
 
-# 6. 验证自动检查
-tail -f data/auto-check.log
+# 6. 验证自动回复触发
+# 给 sales6@zonade.cn 发一封测试邮件 → 约 60s 后应自动触发检查（新邮件 → IDLE 推送 → auto-check）
+tail -f data/idle-daemon.log    # 连接 / exists 触发事件
+tail -f data/auto-check.log     # 检查执行日志
 ```
 
 ---
@@ -501,7 +499,9 @@ systemctl status cc-connect
 # 查看最近日志
 journalctl -u cc-connect --since "1 hour ago" --no-pager
 
-# 自动检查日志
+# 自动回复触发：守护进程状态 + 日志
+systemctl status crm-idle-daemon
+tail -50 /opt/auto_send_mail/data/idle-daemon.log
 tail -50 /opt/auto_send_mail/data/auto-check.log
 
 # 数据库状态
@@ -513,6 +513,9 @@ sqlite3 /opt/auto_send_mail/data/crm.db "SELECT state, count(*) FROM workflow_st
 ```bash
 # 重启 cc-connect
 sudo systemctl restart cc-connect
+
+# 重启 IDLE 守护进程（自动回复触发）
+sudo systemctl restart crm-idle-daemon
 
 # 查看启动状态
 sudo journalctl -u cc-connect -f
@@ -526,8 +529,9 @@ git pull origin main
 npm install
 cd scripts/email-mcp-server && npm install && cd ../..
 
-# 重启 cc-connect
+# 重启 cc-connect 与 IDLE 守护进程
 sudo systemctl restart cc-connect
+sudo systemctl restart crm-idle-daemon
 ```
 
 ### 9.4 备份
@@ -552,7 +556,8 @@ find data/ -name "crm.db.*.bak" -mtime +30 -delete
 | 问题 | 检查 | 解决 |
 |------|------|------|
 | cc-connect 启动失败 | `journalctl -u cc-connect -n 50` | 检查 config.toml 语法，飞书凭证是否有效 |
-| 自动检查不执行 | `crontab -l`，检查 `auto-check.log` | 确认 cron 路径和 `stat` 命令兼容性 |
+| 自动回复不触发 | `systemctl status crm-idle-daemon`，`tail -f data/idle-daemon.log` | 确认服务 active、IMAP 凭证有效、网络可达 `imap.exmail.qq.com:993` |
+| 触发后检查未执行 | `tail -f data/auto-check.log` | 确认 `claude` 在 PATH 且已 `claude setup-token` |
 | 飞书收不到推送 | `systemctl status cc-connect` | 重启 cc-connect，检查 WebSocket 连接 |
 | 邮件发送失败 | Email MCP 连接测试 | 检查 QQ 邮箱授权码是否过期 |
 | OCR 失败 | MinerU API 连通性 | 检查 token 是否有效，API 额度是否用尽 |
@@ -564,7 +569,7 @@ find data/ -name "crm.db.*.bak" -mtime +30 -delete
 - 使用非 root 用户运行所有服务
 - 定期轮换 QQ 邮箱授权码（90 天）
 - 定期轮换 MinerU API Token
-- 监控 `auto-check.log` 大小，确保日志轮转正常
+- 监控 `auto-check.log` / `idle-daemon.log` 大小，确保日志轮转正常
 - 飞书 App Secret 定期检查是否过期
 
 #飞书

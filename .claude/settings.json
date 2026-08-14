@@ -16,7 +16,9 @@
       "Bash(npm install)",
       "Bash(npm ci)",
       "Bash(mineru-open-api:*)",
-      "Bash(cc-connect:*)"
+      "Bash(cc-connect:*)",
+      "Bash(systemctl:*)",
+      "Bash(scripts/install-idle-daemon.sh)"
     ]
   }
 }

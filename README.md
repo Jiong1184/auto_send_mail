@@ -57,7 +57,7 @@ cp scripts/email-mcp-server/config.example.json scripts/email-mcp-server/config.
 
 编辑 `scripts/email-mcp-server/config.json`，填入你的 QQ 邮箱和授权码。
 
-### 3. 启用自动轮询（可选）
+### 3. 启用自动回复触发（可选）
 
 ```bash
 # 生成长效认证 token（需要 Claude 订阅，仅需一次）
@@ -67,7 +67,12 @@ claude setup-token
 chmod +x scripts/auto-check.sh
 ```
 
-然后在 Claude Code 中运行 `/card-followup`，开启 "🔄 Enable auto-polling"。
+在 **Linux** 上运行 `/card-followup`，开启 "🔄 Enable auto-polling"，系统会安装 systemd 服务
+`crm-idle-daemon`（IMAP IDLE 事件触发）。也可手动安装：
+
+```bash
+sudo bash scripts/install-idle-daemon.sh
+```
 
 ### 4. 填写知识库
 
@@ -106,7 +111,7 @@ chmod +x scripts/auto-check.sh
 |------|------|------|
 | **Auto-approve** | 🔍 草稿需人工审核 | ⚡ 直接发送，跳过审核 |
 | **Language** | 🌐 EN 英文 | 🌐 中文 |
-| **Auto-polling** | ⏸ 手动检查回复 | 🔄 每 10 分钟自动检查 |
+| **Auto-polling** | ⏸ 手动检查回复 | 🔄 IMAP IDLE 触发，新邮件实时检查 |
 
 ### 自动化程度组合
 
@@ -121,27 +126,38 @@ chmod +x scripts/auto-check.sh
 ### 策略 A — 手动检查
 运行 `/card-followup` → "Check for new replies"。适合调试和低频使用。
 
-### 策略 B — bash + system cron（推荐，7×24）
+### 策略 B — IMAP IDLE 事件触发（推荐，7×24）
 
-通过主菜单开启 "🔄 Enable auto-polling"，系统会安装一条 crontab 定时任务，
-每 N 分钟运行 `scripts/auto-check.sh`，调用 `claude -p` 在 headless 模式下自动检查回复。
-无需 Claude Code 保持运行，系统开机即可后台工作。
+通过主菜单开启 "🔄 Enable auto-polling"，系统会安装 systemd 服务 `crm-idle-daemon`：
+一个常驻的 **IMAP IDLE 守护进程**与 QQ 邮箱保持长连接，新邮件到达时服务器主动推送，
+守护进程立即触发一次检查——不再依赖定时器轮询，无空跑、延迟接近实时。
 
-**前置要求：**
+**前置要求（Linux）：**
 ```bash
 # 一次性设置：生成长效认证 token（需要 Claude 订阅）
 claude setup-token
 
 # 确保脚本有执行权限
 chmod +x scripts/auto-check.sh
+
+# 安装并启动 systemd 服务（需要 root）
+sudo bash scripts/install-idle-daemon.sh
 ```
 
 **工作原理：**
-1. cron 每分钟触发 `scripts/auto-check.sh`
-2. 脚本通过 `flock` 互斥锁防止重复运行
-3. 调用 `claude -p` 启动子 agent 完成：IMAP 检查 → 联系人匹配 → AI 语义分类 → 自动回复
-4. 日志写入 `data/auto-check.log`
-5. 使用 AI 语义理解做意图分类，精度最高；3 次自动回复上限防止循环
+1. `scripts/email-mcp-server/idle-daemon.js` 保持一条 IMAP IDLE 长连接
+2. 服务器推送新邮件通知（`exists` 事件）→ 去抖 60s 合并连发 → 触发 `scripts/auto-check.sh`
+3. 每次（重）连接成功会执行一次**补偿检查**，捞回守护进程离线期间到达的邮件
+4. `auto-check.sh` 通过 `flock` 互斥锁防止重复运行，调用 `claude -p` 完成：
+   IMAP 检查 → 联系人匹配 → AI 语义分类 → 自动回复
+5. 日志：`data/auto-check.log`（检查）与 `data/idle-daemon.log`（连接/触发/重连）
+
+**管理命令：**
+```bash
+systemctl status crm-idle-daemon                                   # 查看状态
+systemctl restart crm-idle-daemon                                  # 重启
+sudo bash scripts/install-idle-daemon.sh --remove                  # 卸载（禁用服务）
+```
 
 ## 团队转交功能
 
@@ -170,7 +186,8 @@ auto_send_mail/
 ├── .mcp.json                          # MCP Server 配置
 ├── data/
 │   ├── crm.db                         # SQLite 数据库（5 张表）
-│   └── auto-check.log                 # 自动检查日志
+│   ├── auto-check.log                 # 自动检查日志
+│   └── idle-daemon.log                # IDLE 守护进程日志
 ├── references/
 │   ├── crm-settings.json              # 系统设置（语言、审批、轮询、团队成员）
 │   ├── knowledge-base/                # 知识库（Markdown）
@@ -184,12 +201,16 @@ auto_send_mail/
 ├── scripts/
 │   ├── email-mcp-server/              # 自定义 Email MCP
 │   │   ├── index.js                   # send_email / check_replies / verify_connection
+│   │   ├── idle-daemon.js             # IMAP IDLE 事件触发守护进程
 │   │   ├── package.json
 │   │   ├── config.example.json
 │   │   └── config.json                # (gitignored)
-│   ├── auto-check.sh                  # bash + cron 自动检查脚本
+│   ├── auto-check.sh                  # 单次自动检查脚本（含 flock 互斥 + 日志轮转）
+│   ├── install-idle-daemon.sh         # systemd 服务安装/卸载辅助脚本
 │   ├── send-scheduled-email.js        # 定时邮件发送
 │   └── setup-db.js                    # 数据库建表参考
+├── deploy/
+│   └── crm-idle-daemon.service        # systemd unit 模板
 ├── CLAUDE.md                          # 项目上下文
 ├── .gitignore
 └── README.md
@@ -210,7 +231,7 @@ auto_send_mail/
 | 决策 | 理由 |
 |------|------|
 | **SQLite** | 零配置、单文件、官方 MCP 支持 |
-| **IMAP 轮询** | 适用任何邮箱（QQ/Gmail/企业邮） |
+| **IMAP IDLE 触发** | 事件驱动，新邮件实时触发；断线自动重连 + 补偿检查 |
 | **Markdown 知识库** | 简单可版本控制，文档 < 10 篇时优于向量库 |
 | **人工审核发件** | 默认所有外发邮件需审核，防止 AI 误发（可开关） |
 | **全量审计日志** | timeline 表记录每一步操作，可追溯可回滚 |
@@ -223,9 +244,14 @@ auto_send_mail/
   "autoApproveDrafts": false,
   "language": "en",
   "autoReplyPolling": {
-    "enabled": false,
-    "intervalMinutes": 10,
-    "crontabEntry": ""
+    "enabled": true,
+    "trigger": "idle",
+    "lastCheckedAt": ""
+  },
+  "idleDaemon": {
+    "enabled": true,
+    "debounceSeconds": 60,
+    "serviceName": "crm-idle-daemon"
   },
   "teamMembers": [
     { "name": "Sales Team", "email": "sales@company.com", "role": "Product info, pricing, negotiation" },

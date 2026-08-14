@@ -3,10 +3,17 @@
   "language": "zh",
   "autoReplyPolling": {
     "enabled": true,
+    "trigger": "idle",
     "intervalMinutes": 5,
     "crontabEntry": "*/5 * * * * bash /Users/fqh1184/projects/gitProjects/auto_send_mail/scripts/auto-check.sh",
     "lastCheckedAt": "2026-07-23T10:13:25.222Z",
-    "note": "When enabled, a system crontab entry runs scripts/auto-check.sh every N minutes. crontabEntry stores the cron line for disabling. lastCheckedAt tracks the most recent check time so each cycle only fetches new messages."
+    "note": "trigger: \"idle\" (new, default) — driven by idleDaemon + systemd; \"cron\" (legacy) — system crontab runs auto-check.sh every N minutes. lastCheckedAt still tracks the last check so each run only fetches new messages (also used by the daemon's offline catch-up)."
+  },
+  "idleDaemon": {
+    "enabled": true,
+    "debounceSeconds": 60,
+    "serviceName": "crm-idle-daemon",
+    "note": "IMAP IDLE event-trigger daemon (scripts/email-mcp-server/idle-daemon.js). Holds a persistent IMAP IDLE connection; on new mail (exists event) it batches arrivals within debounceSeconds then runs scripts/auto-check.sh. Managed on Linux as systemd service 'crm-idle-daemon' (deploy/crm-idle-daemon.service, scripts/install-idle-daemon.sh)."
   },
   "note_language": "\"en\" for English (default), \"zh\" for Chinese. Controls email language and Skill UI prompts.",
   "note_autoApprove": "Set to true to skip draft review and send emails immediately. When combined with autoReplyPolling (bash+cron), the full pipeline runs hands-free 24/7.",
